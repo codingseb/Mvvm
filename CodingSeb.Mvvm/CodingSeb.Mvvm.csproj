@@ -9,6 +9,7 @@
     <Description>Some useful stuffs to do Mvvm</Description>
     <Copyright>Copyright © Coding Seb 2019</Copyright>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <RepositoryUrl>https://github.com/codingseb/Mvvm</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
