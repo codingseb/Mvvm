@@ -19,4 +19,8 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="CodingSeb.ExpressionEvaluator" Version="1.4.16" />
+  </ItemGroup>
+
 </Project>
