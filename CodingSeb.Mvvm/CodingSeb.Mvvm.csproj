@@ -1,10 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.0;net47</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.0;net45</TargetFrameworks>
+    <LangVersion>8.0</LangVersion>
     <UseWPF>true</UseWPF>
     <Authors>CodingSeb</Authors>
-    <Company />
+    <Company>CodingSeb</Company>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Description>Some useful stuffs to do Mvvm</Description>
     <Copyright>Copyright © Coding Seb 2019</Copyright>

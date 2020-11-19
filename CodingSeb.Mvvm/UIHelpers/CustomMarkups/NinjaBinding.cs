@@ -66,8 +66,7 @@ namespace CodingSeb.Mvvm.UIHelpers
             if (Binding.ElementName != null)
             {
                 var reference = new Reference(Binding.ElementName);
-                var source = reference.ProvideValue(serviceProvider) as FrameworkElement;
-                if (source == null)
+                if (!(reference.ProvideValue(serviceProvider) is FrameworkElement source))
                 {
                     var rootObjectProvider = (IRootObjectProvider)serviceProvider.GetService(typeof(IRootObjectProvider));
                     if (rootObjectProvider == null)
