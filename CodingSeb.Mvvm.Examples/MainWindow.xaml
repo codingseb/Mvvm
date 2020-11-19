@@ -6,7 +6,8 @@
         xmlns:local="clr-namespace:CodingSeb.Mvvm.Examples"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        <TextBlock Text="{Eval Expression=2.ToString()}" />
-    </Grid>
+    <StackPanel>
+        <TextBlock Text="{Eval 2.ToString()}" />
+        <Label Content="{XMultiBinding}" />
+    </StackPanel>
 </Window>
