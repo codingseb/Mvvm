@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Windows;
+using System.Windows.Data;
 using System.Windows.Markup;
 
 namespace CodingSeb.Mvvm.UIHelpers
@@ -28,7 +30,18 @@ namespace CodingSeb.Mvvm.UIHelpers
 
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
-            var evaluator = new ExpressionEvaluator.ExpressionEvaluator();
+            if (!(serviceProvider.GetService(typeof(IProvideValueTarget)) is IProvideValueTarget service))
+                return this;
+
+            if (!(service.TargetObject is DependencyObject targetObject)
+                || !(service.TargetProperty is DependencyProperty targetProperty))
+            {
+                return this;
+            }
+
+            FrameworkElement frameworkElement = targetObject as FrameworkElement;
+
+            var evaluator = new ExpressionEvaluator.ExpressionEvaluator(frameworkElement?.DataContext);
 
             return evaluator.Evaluate(Expression);
         }

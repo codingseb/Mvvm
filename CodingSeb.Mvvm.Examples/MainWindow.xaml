@@ -4,10 +4,56 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CodingSeb.Mvvm.Examples"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
+        DataContext="{x:Static local:MainViewModel.Instance}"
         Title="MainWindow" Height="450" Width="800">
+    <Window.Resources>
+        <sys:Boolean x:Key="TrueBool">True</sys:Boolean>
+        <sys:Boolean x:Key="FalseBool">False</sys:Boolean>
+
+        <Style TargetType="TextBox">
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </Window.Resources>
     <StackPanel>
-        <TextBlock Text="{Eval 2.ToString()}" />
-        <Label Content="{XMultiBinding}" />
+        <AutoGrid Columns="Auto,*" >
+            <Label Content="Value1" />
+            <TextBox Text="{Binding Value1}" />
+            <Label Content="Value2" />
+            <TextBox Text="{Binding Value2}" />
+        </AutoGrid>
+        <TextBlock Text="{Eval '(Value1 + Value2).ToString()'}" />
+        <StackPanelEx Orientation="Horizontal" MarginBetweenChildren="10" >
+            <CheckBox Content="1" x:Name="CheckBox1" />
+            <CheckBox Content="2" x:Name="CheckBox2" />
+            <CheckBox Content="3" x:Name="CheckBox3" />
+            <CheckBox Content="4" x:Name="CheckBox4" />
+            <CheckBox Content="5" x:Name="CheckBox5" />
+        </StackPanelEx>
+        <CheckBox IsEnabled="False"
+                  Content="(1 and not 2) or (3 and 4) or 5"
+                  IsChecked="{XMultiBinding 
+                    {XMultiBinding {Binding IsChecked, ElementName=CheckBox1}, {Binding IsChecked, ElementName=CheckBox2, Converter={BoolReverseConverter}} ,Converter={BoolMultiBindingAndConditionConverter}},
+                    {XMultiBinding {Binding IsChecked, ElementName=CheckBox3}, {Binding IsChecked, ElementName=CheckBox4}, Converter={BoolMultiBindingAndConditionConverter}}, 
+                    {Binding IsChecked, ElementName=CheckBox5}, 
+                    Converter={BoolMultiBindingOrConditionConverter}}"/>
+        <CheckBox IsEnabled="False"
+                  Content="(1 and (2 or not 3)) or (4 and 5)"
+                  IsChecked="{XMultiBinding 
+                    {XMultiBinding {Binding IsChecked, ElementName=CheckBox1}, 
+                      {XMultiBinding {Binding IsChecked, ElementName=CheckBox2}, {Binding IsChecked, ElementName=CheckBox3, Converter={BoolReverseConverter}}, Converter={BoolMultiBindingOrConditionConverter}} , 
+                      Converter={BoolMultiBindingAndConditionConverter}}, 
+                    {XMultiBinding {Binding IsChecked, ElementName=CheckBox4}, {Binding IsChecked, ElementName=CheckBox5}, Converter={BoolMultiBindingAndConditionConverter}}, 
+                    Converter={BoolMultiBindingOrConditionConverter} }"/>
+        <CheckBox IsEnabled="False"
+                  Content="1 and TrueBool in resources"
+                  IsChecked="{XMultiBinding {Binding IsChecked, ElementName=CheckBox1}, {Binding Source={StaticResource TrueBool}, Mode=OneWay}, Converter={BoolMultiBindingAndConditionConverter}}"/>
+        <CheckBox IsEnabled="False"
+                  Content="1 or FalseBool in resources"
+                  IsChecked="{XMultiBinding {Binding IsChecked, ElementName=CheckBox1}, {Binding Source={StaticResource FalseBool}, Mode=OneWay}, Converter={BoolMultiBindingOrConditionConverter}}"/>
+       <CheckBox IsEnabled="False"
+                  Content="1 and Eval"
+                  IsChecked="{XMultiBinding {Binding IsChecked, ElementName=CheckBox1}, {Eval 2 > 1}, Converter={BoolMultiBindingAndConditionConverter}}"/>
     </StackPanel>
 </Window>

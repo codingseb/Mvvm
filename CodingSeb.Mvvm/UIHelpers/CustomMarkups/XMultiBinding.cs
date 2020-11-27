@@ -140,6 +140,9 @@ namespace CodingSeb.Mvvm.UIHelpers
 
         public object ProvideValue(IServiceProvider serviceProvider, bool hierarchyBuilding)
         {
+            if (Converter == null)
+                throw new ArgumentNullException(nameof(Converter));
+
             if (!(serviceProvider.GetService(typeof(IProvideValueTarget)) is IProvideValueTarget service))
                 return this;
 
@@ -168,29 +171,40 @@ namespace CodingSeb.Mvvm.UIHelpers
                     subMultiBindingFromX.Bindings.ToList().ForEach(multiBinding.Bindings.Add);
                     return subMultiBindingFromX;
                 }
-                else if(markup is MultiBinding subMultiBinding)
+                else if (markup is MultiBinding subMultiBinding)
                 {
                     subMultiBinding.Bindings.ToList().ForEach(multiBinding.Bindings.Add);
                     return subMultiBinding;
                 }
-                else if(markup is BindingBase bindingBase)
+                else if (markup is BindingBase bindingBase)
                 {
                     multiBinding.Bindings.Add(bindingBase);
                     return bindingBase;
                 }
                 else
                 {
-                    Binding binding = new Binding()
-                    {
-                        Source = markup
-                    };
+                    object providedValue = markup.ProvideValue(serviceProvider);
 
-                    multiBinding.Bindings.Add(binding);
-                    return binding;
+                    if (providedValue is MultiBinding providedMultiBinding)
+                    {
+                        providedMultiBinding.Bindings.ToList().ForEach(multiBinding.Bindings.Add);
+                        return providedMultiBinding;
+                    }
+                    else if ((bindingBase = providedValue as Binding) == null)
+                    {
+                        bindingBase = new Binding()
+                        {
+                            Source = providedValue,
+                            Mode = BindingMode.OneWay
+                        };
+                    }
+
+                    multiBinding.Bindings.Add(bindingBase);
+                    return bindingBase;
                 }
             }).ToList();
 
-            if(hierarchyBuilding)
+            if (hierarchyBuilding)
             {
                 return multiBinding;
             }
@@ -211,13 +225,28 @@ namespace CodingSeb.Mvvm.UIHelpers
 
             public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
             {
-                
+                List<object> groupedBindingsResults = new List<object>();
+
+                int offset = 0;
+
+                Children.ForEach(bindingBase =>
+                {
+                    if (bindingBase is MultiBinding multiBinding)
+                    {
+                        groupedBindingsResults.Add(multiBinding.Converter.Convert(values.Skip(offset).Take(multiBinding.Bindings.Count).ToArray(), null, multiBinding.ConverterParameter, multiBinding.ConverterCulture));
+                        offset += multiBinding.Bindings.Count;
+                    }
+                    else
+                    {
+                        groupedBindingsResults.Add(values[offset]);
+                        offset++;
+                    }
+                });
+
+                return Converter.Convert(groupedBindingsResults.ToArray(), null, ConverterParameter, ConverterCultureInfo);
             }
 
-            public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
-            {
-                throw new NotImplementedException();
-            }
+            public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotImplementedException();
         }
     }
 }
