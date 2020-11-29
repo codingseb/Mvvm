@@ -68,28 +68,31 @@ namespace CodingSeb.Mvvm.UIHelpers
             var evaluator = new InternalExpressionEvaluator(frameworkElement?.DataContext)
             {
                 ServiceProvider = serviceProvider,
-                TargetObject = targetObject
+                //TargetObject = targetObject
+            };
+
+            var internalConverter = new EvalInternalConverter()
+            {
+                Evaluator = evaluator,
+                Expression = Expression,
+                DataContext = dataContext,
             };
 
             MultiBinding multiBinding = new MultiBinding()
             {
-                Converter = new EvalInternalConverter()
-                {
-                    Evaluator = evaluator,
-                    Expression = Expression,
-                    DataContext = dataContext,
-                }
+                Converter = internalConverter
             };
 
             void PreEvaluateVariables(object sender, ExpressionEvaluator.VariablePreEvaluationEventArg args)
             {
                 if (args.This != targetObject || !args.Name.Equals(targetProperty.Name))
                 {
-                    if (args.This is INotifyPropertyChanged notifyPropertyChanged)
+                    if (args.This is INotifyPropertyChanged || args.This is DependencyObject)
                     {
                         multiBinding.Bindings.Add(new Binding(args.Name)
                         {
-                            Source = notifyPropertyChanged
+                            Source = args.This,
+                            Mode = BindingMode.OneWay
                         });
                     }
                 }
@@ -100,7 +103,11 @@ namespace CodingSeb.Mvvm.UIHelpers
                 evaluator.PreEvaluateVariable += PreEvaluateVariables;
             }
 
-            var firstResult = evaluator.Evaluate(Expression);
+            try
+            {
+                internalConverter.LastValue = evaluator.Evaluate(Expression);
+            }
+            catch { }
 
             evaluator.PreEvaluateVariable -= PreEvaluateVariables;
 
@@ -114,7 +121,7 @@ namespace CodingSeb.Mvvm.UIHelpers
                 return multiBinding.ProvideValue(serviceProvider);
             }
 
-            return firstResult;
+            return internalConverter.LastValue;
         }
 
         protected class EvalInternalConverter : IMultiValueConverter
@@ -123,10 +130,17 @@ namespace CodingSeb.Mvvm.UIHelpers
 
             public string Expression { get; set; }
             public object DataContext { get; set; }
+            public object LastValue { get; set; }
 
             public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
             {
-                return Evaluator.Evaluate(Expression);
+                try
+                {
+                    LastValue = Evaluator.Evaluate(Expression);
+                }
+                catch { }
+
+                return LastValue;
             }
 
             public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
@@ -137,10 +151,12 @@ namespace CodingSeb.Mvvm.UIHelpers
 
         protected class InternalExpressionEvaluator : ExpressionEvaluator.ExpressionEvaluator
         {
-            public IServiceProvider ServiceProvider { get; set; }
-            public DependencyObject TargetObject { get; set; }
+            private static readonly Regex elementNameRegex = new Regex(@"^#(?<name>[\p{L}_](?>[\p{L}_0-9]*))");
 
-            private Dictionary<string, object> elementNameDict = new Dictionary<string, object>();
+            public IServiceProvider ServiceProvider { get; set; }
+            //public DependencyObject TargetObject { get; set; }
+
+            public Dictionary<string, object> elementNameDict = new Dictionary<string, object>();
 
             public InternalExpressionEvaluator(object contextObject) : base(contextObject)
             {}
@@ -152,7 +168,7 @@ namespace CodingSeb.Mvvm.UIHelpers
 
             protected virtual bool EvaluateBindingVariables(string expression, Stack<object> stack, ref int i)
             {
-                Match match = Regex.Match(expression.Substring(i), @"^#(?<name>[\p{L}_](?>[\p{L}_0-9]*))");
+                Match match = elementNameRegex.Match(expression.Substring(i));
 
                 if (match.Success)
                 {
