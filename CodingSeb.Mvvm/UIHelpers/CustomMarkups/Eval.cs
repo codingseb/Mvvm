@@ -107,7 +107,9 @@ namespace CodingSeb.Mvvm.UIHelpers
             {
                 internalConverter.LastValue = evaluator.Evaluate(Expression);
             }
-            catch { }
+            catch (Exception e)
+            {
+            }
 
             evaluator.PreEvaluateVariable -= PreEvaluateVariables;
 
@@ -151,12 +153,13 @@ namespace CodingSeb.Mvvm.UIHelpers
 
         protected class InternalExpressionEvaluator : ExpressionEvaluator.ExpressionEvaluator
         {
-            private static readonly Regex elementNameRegex = new Regex(@"^#(?<name>[\p{L}_](?>[\p{L}_0-9]*))");
+            private static readonly Regex elementNameRegex =
+                new Regex(@"^(#(?<ElementName>[\p{L}_](?>[\p{L}_0-9]*)))|(?<Parent>\$parent(\[\^s*(?<AncestorLevel>\d+)|(?<AncestorType>[\p{L}_][^\] \t]*])\s*\])?)");
 
             public IServiceProvider ServiceProvider { get; set; }
             //public DependencyObject TargetObject { get; set; }
 
-            public Dictionary<string, object> elementNameDict = new Dictionary<string, object>();
+            public Dictionary<string, object> BindingsSourcesDict = new Dictionary<string, object>();
 
             public InternalExpressionEvaluator(object contextObject) : base(contextObject)
             {}
@@ -172,14 +175,34 @@ namespace CodingSeb.Mvvm.UIHelpers
 
                 if (match.Success)
                 {
-                    string name = match.Groups["name"].Value;
+                    string name = match.Value;
 
-                    if (!elementNameDict.ContainsKey(name))
+                    if (!BindingsSourcesDict.ContainsKey(name))
                     {
-                        elementNameDict[name] = new Reference(name).ProvideValue(ServiceProvider);
+                        if (match.Groups["ElementName"].Success)
+                        {
+                            BindingsSourcesDict[name] = new Reference(match.Groups["ElementName"].Value).ProvideValue(ServiceProvider);
+                        }
+                        else if(match.Groups["Parent"].Success)
+                        {
+                            if(match.Groups["AncestorLevel"].Success)
+                            {
+                                BindingsSourcesDict[name] = new RelativeSource(RelativeSourceMode.FindAncestor, null, int.Parse(match.Groups["AncestorLevel"].Value))
+                                    .ProvideValue(ServiceProvider);
+                            }
+                            else if(match.Groups["AncestorType"].Success)
+                            {
+                                BindingsSourcesDict[name] = new RelativeSource(RelativeSourceMode.FindAncestor, new TypeExtension(match.Groups["AncestorType"].Value).ProvideValue(ServiceProvider) as Type, 1)
+                                    .ProvideValue(ServiceProvider);
+                            }
+                            else
+                            {
+                                BindingsSourcesDict[name] = new RelativeSource(RelativeSourceMode.FindAncestor, null, 1).ProvideValue(ServiceProvider);
+                            }
+                        }
                     }
 
-                    stack.Push(elementNameDict[name]);
+                    stack.Push(BindingsSourcesDict[name]);
 
                     i += match.Length - 1;
 
