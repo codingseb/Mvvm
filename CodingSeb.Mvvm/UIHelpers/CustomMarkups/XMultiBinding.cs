@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Markup;
@@ -183,7 +184,17 @@ namespace CodingSeb.Mvvm.UIHelpers
                 }
                 else
                 {
-                    object providedValue = markup.ProvideValue(serviceProvider);
+                    object providedValue = null;
+                    MethodInfo methodInfo = markup.GetType().GetMethod("ProvideValue", new Type[] { typeof(IServiceProvider), typeof(bool) });
+
+                    if (methodInfo != null)
+                    {
+                        providedValue = methodInfo.Invoke(markup, new object[] { serviceProvider, true } );
+                    }
+                    else
+                    {
+                        providedValue = markup.ProvideValue(serviceProvider);
+                    }
 
                     if (providedValue is MultiBinding providedMultiBinding)
                     {

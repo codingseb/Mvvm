@@ -6,3 +6,4 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("General", "RCS1079:Throwing of new NotImplementedException.", Justification = "<Pending>", Scope = "namespaceanddescendants", Target = "~N:CodingSeb.Mvvm")]
+[assembly: SuppressMessage("Style", "IDE0057:Use range operator", Justification = "<Pending>", Scope = "namespaceanddescendants", Target = "~N:CodingSeb.Mvvm")]

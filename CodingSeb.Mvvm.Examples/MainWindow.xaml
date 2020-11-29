@@ -19,11 +19,11 @@
     <StackPanel>
         <AutoGrid Columns="Auto,*" >
             <Label Content="Value1" />
-            <TextBox Text="{Binding Value1}" />
+            <TextBox x:Name="TextBox1" Text="1"/>
             <Label Content="Value2" />
-            <TextBox Text="{Binding Value2}" />
+            <TextBox Text="{Binding Value2, UpdateSourceTrigger=PropertyChanged}" />
         </AutoGrid>
-        <TextBlock Text="{Eval '(Value1 + Value2).ToString()'}" />
+        <TextBlock Text="{Eval '(int.Parse(#TextBox1.Text) + Value2).ToString()'}" />
         <StackPanelEx Orientation="Horizontal" MarginBetweenChildren="10" >
             <CheckBox Content="1" x:Name="CheckBox1" />
             <CheckBox Content="2" x:Name="CheckBox2" />
@@ -34,7 +34,7 @@
         <CheckBox IsEnabled="False"
                   Content="(1 and not 2) or (3 and 4) or 5"
                   IsChecked="{XMultiBinding 
-                    {XMultiBinding {Binding IsChecked, ElementName=CheckBox1}, {Binding IsChecked, ElementName=CheckBox2, Converter={BoolReverseConverter}} ,Converter={BoolMultiBindingAndConditionConverter}},
+                    {XMultiBinding {Binding IsChecked, ElementName=CheckBox1}, {Binding IsChecked, ElementName=CheckBox2, Converter={BoolReverseConverter}} , Converter={BoolMultiBindingAndConditionConverter}},
                     {XMultiBinding {Binding IsChecked, ElementName=CheckBox3}, {Binding IsChecked, ElementName=CheckBox4}, Converter={BoolMultiBindingAndConditionConverter}}, 
                     {Binding IsChecked, ElementName=CheckBox5}, 
                     Converter={BoolMultiBindingOrConditionConverter}}"/>
