@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Markup;
+using System.Windows.Media;
 
 namespace CodingSeb.Mvvm.UIHelpers
 {
@@ -44,7 +45,7 @@ namespace CodingSeb.Mvvm.UIHelpers
         /// Si mis à <c>true</c> on récupère le résultat mais on ne rend pas l'Eval dynamic en créant des Binding sur les éléments qui les supportent.
         /// Par défaut : <c>false</c>
         /// </summary>
-        public bool DoNotBind { get; set; }
+        public bool DoNotAutoBinding { get; set; }
 
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
@@ -68,7 +69,7 @@ namespace CodingSeb.Mvvm.UIHelpers
             var evaluator = new InternalExpressionEvaluator(frameworkElement?.DataContext)
             {
                 ServiceProvider = serviceProvider,
-                //TargetObject = targetObject
+                TargetObject = targetObject
             };
 
             var internalConverter = new EvalInternalConverter()
@@ -98,7 +99,7 @@ namespace CodingSeb.Mvvm.UIHelpers
                 }
             }
 
-            if (!DoNotBind)
+            if (!DoNotAutoBinding)
             {
                 evaluator.PreEvaluateVariable += PreEvaluateVariables;
             }
@@ -154,10 +155,10 @@ namespace CodingSeb.Mvvm.UIHelpers
         protected class InternalExpressionEvaluator : ExpressionEvaluator.ExpressionEvaluator
         {
             private static readonly Regex elementNameRegex =
-                new Regex(@"^(#(?<ElementName>[\p{L}_](?>[\p{L}_0-9]*)))|(?<Parent>\$parent(\[\^s*(?<AncestorLevel>\d+)|(?<AncestorType>[\p{L}_][^\] \t]*])\s*\])?)");
+                new Regex(@"^(\#(?<ElementName>[\p{L}_][\p{L}_0-9]*))|(?<Parent>\$parent(\[\s*((?<AncestorLevel>\d+)|(?<AncestorType>[^;\] \t]+)(\s*;\s*(?<AncestorLevel>\d+))?)\s*\])?)");
 
             public IServiceProvider ServiceProvider { get; set; }
-            //public DependencyObject TargetObject { get; set; }
+            public DependencyObject TargetObject { get; set; }
 
             public Dictionary<string, object> BindingsSourcesDict = new Dictionary<string, object>();
 
@@ -185,19 +186,19 @@ namespace CodingSeb.Mvvm.UIHelpers
                         }
                         else if(match.Groups["Parent"].Success)
                         {
-                            if(match.Groups["AncestorLevel"].Success)
+                            if (match.Groups["AncestorType"].Success)
                             {
-                                BindingsSourcesDict[name] = new RelativeSource(RelativeSourceMode.FindAncestor, null, int.Parse(match.Groups["AncestorLevel"].Value))
-                                    .ProvideValue(ServiceProvider);
+                                BindingsSourcesDict[name] = TargetObject
+                                    .FindVisualParent(new TypeExtension(match.Groups["AncestorType"].Value).ProvideValue(ServiceProvider) as Type
+                                    , match.Groups["AncestorLevel"].Success ? int.Parse(match.Groups["AncestorLevel"].Value) : 1);
                             }
-                            else if(match.Groups["AncestorType"].Success)
+                            else if(match.Groups["AncestorLevel"].Success)
                             {
-                                BindingsSourcesDict[name] = new RelativeSource(RelativeSourceMode.FindAncestor, new TypeExtension(match.Groups["AncestorType"].Value).ProvideValue(ServiceProvider) as Type, 1)
-                                    .ProvideValue(ServiceProvider);
+                                BindingsSourcesDict[name] = TargetObject.FindVisualParent(typeof(DependencyObject), int.Parse(match.Groups["AncestorLevel"].Value));
                             }
                             else
                             {
-                                BindingsSourcesDict[name] = new RelativeSource(RelativeSourceMode.FindAncestor, null, 1).ProvideValue(ServiceProvider);
+                                BindingsSourcesDict[name] = VisualTreeHelper.GetParent(TargetObject);
                             }
                         }
                     }

@@ -16,7 +16,7 @@
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
     </Window.Resources>
-    <StackPanel>
+    <StackPanelEx Tag="Parent">
         <AutoGrid Columns="Auto,*" >
             <Label Content="Value1" />
             <TextBox x:Name="TextBox1" />
@@ -24,7 +24,17 @@
             <TextBox Text="{Binding Value2, UpdateSourceTrigger=PropertyChanged}" />
         </AutoGrid>
         <TextBlock Text="{Eval '((double)(#TextBox1.Text) + Value2).ToString()'}" />
-        <TextBlock Text="{Eval $parent.ToString()}" />
+        <Grid Tag="InterGrid">
+            <StackPanelEx Tag="Child" Orientation="Horizontal" MarginBetweenChildren="10" >
+                <TextBlock Text="{Eval '$parent.Tag'}" />
+                <TextBlock Text="{Eval '$parent[StackPanelEx].Tag'}" />
+                <TextBlock Text="{Eval '$parent[StackPanelEx;1].Tag'}" />
+                <TextBlock Text="{Eval '$parent[StackPanelEx;2].Tag'}" />
+                <TextBlock Text="{Eval '$parent[1].Tag'}" />
+                <TextBlock Text="{Eval '$parent[2].Tag'}" />
+                <TextBlock Text="{Eval '$parent[3].Tag'}" />
+            </StackPanelEx>
+        </Grid>
         <StackPanelEx Orientation="Horizontal" MarginBetweenChildren="10" >
             <CheckBox Content="1" x:Name="CheckBox1" />
             <CheckBox Content="2" x:Name="CheckBox2" />
@@ -56,5 +66,5 @@
        <CheckBox IsEnabled="False"
                   Content="1 and Eval"
                   IsChecked="{XMultiBinding {Binding IsChecked, ElementName=CheckBox1}, {Eval 2 > 1}, Converter={BoolMultiBindingAndConditionConverter}}"/>
-    </StackPanel>
+    </StackPanelEx>
 </Window>

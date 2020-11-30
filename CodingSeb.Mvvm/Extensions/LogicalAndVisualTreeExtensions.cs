@@ -17,8 +17,9 @@ namespace System.Windows
         /// </summary>
         /// <typeparam name="T">The type of the parent we search for</typeparam>
         /// <param name="child">A DependencyObject child from where to start the search</param>
+        /// <param name="ancestorLevel">The level of ancestor of the specified Type to return by default : 1</param>
         /// <returns>The first found parent of the specified type, or null if none are found</returns>
-        public static T FindVisualParent<T>(this DependencyObject child)
+        public static T FindVisualParent<T>(this DependencyObject child, int ancestorLevel = 1)
             where T : DependencyObject
         {
             // get parent item
@@ -30,13 +31,43 @@ namespace System.Windows
             // check if the parent matches the type we’re looking for
             if (parentObject is T parent)
             {
-                return parent;
+                if (ancestorLevel > 1)
+                    ancestorLevel--;
+                else
+                    return parent;
             }
-            else
+
+            // use recursion to proceed with next level
+            return FindVisualParent<T>(parentObject, ancestorLevel);
+        }
+
+        /// <summary>
+        /// To find a parent(Ancestor) of the specified type in the visual tree
+        /// Begin from the current child and go up until it find the parent or reach the root
+        /// </summary>
+        /// <param name="child">A DependencyObject child from where to start the search</param>
+        /// <param name="typeOfParent">The type of the parent we search for</param>
+        /// <param name="ancestorLevel">The level of ancestor of the specified Type to return by default : 1</param>
+        /// <returns>The first found parent of the specified type, or null if none are found</returns>
+        public static DependencyObject FindVisualParent(this DependencyObject child, Type typeOfParent, int ancestorLevel = 1)
+        {
+            // get parent item
+            var parentObject = VisualTreeHelper.GetParent(child);
+
+            // we’ve reached the end of the tree
+            if (parentObject == null) return null;
+
+            // check if the parent matches the type we’re looking for
+            if (typeOfParent.IsAssignableFrom(parentObject.GetType()))
             {
-                // use recursion to proceed with next level
-                return FindVisualParent<T>(parentObject);
+                if (ancestorLevel > 1)
+                    ancestorLevel--;
+                else
+                    return parentObject;
             }
+
+            // use recursion to proceed with next level
+            return FindVisualParent(parentObject, typeOfParent, ancestorLevel);
         }
 
         /// <summary>
@@ -45,8 +76,9 @@ namespace System.Windows
         /// </summary>
         /// <typeparam name="T">The type of the parent we search for</typeparam>
         /// <param name="child">A DependencyObject child from where to start the search</param>
+        /// <param name="ancestorLevel">The level of ancestor of the specified Type to return by default : 1</param>
         /// <returns>The first found parent of the specified type, or null if none are found</returns>
-        public static T FindLogicalParent<T>(this DependencyObject child)
+        public static T FindLogicalParent<T>(this DependencyObject child, int ancestorLevel = 1)
             where T : DependencyObject
         {
             // get parent item
@@ -58,13 +90,43 @@ namespace System.Windows
             // check if the parent matches the type we’re looking for
             if (parentObject is T parent)
             {
-                return parent;
+                if (ancestorLevel > 1)
+                    ancestorLevel--;
+                else
+                    return parent;
             }
-            else
+
+            // use recursion to proceed with next level
+            return FindLogicalParent<T>(parentObject, ancestorLevel);
+        }
+
+        /// <summary>
+        /// To find a parent (Ancestor) of the specified type in the logical tree
+        /// Begin from the current child and go up until it find the parent or reach the root
+        /// </summary>
+        /// <param name="child">A DependencyObject child from where to start the search</param>
+        /// <param name="typeOfParent">The type of the parent we search for</param>
+        /// <param name="ancestorLevel">The level of ancestor of the specified Type to return by default : 1</param>
+        /// <returns>The first found parent of the specified type, or null if none are found</returns>
+        public static DependencyObject FindLogicalParent(this DependencyObject child, Type typeOfParent, int ancestorLevel = 1)
+        {
+            // get parent item
+            var parentObject = LogicalTreeHelper.GetParent(child);
+
+            // we’ve reached the end of the tree
+            if (parentObject == null) return null;
+
+            // check if the parent matches the type we’re looking for
+            if (typeOfParent.IsAssignableFrom(parentObject.GetType()))
             {
-                // use recursion to proceed with next level
-                return FindVisualParent<T>(parentObject);
+                if (ancestorLevel > 1)
+                    ancestorLevel--;
+                else
+                    return parentObject;
             }
+
+            // use recursion to proceed with next level
+            return FindLogicalParent(parentObject, typeOfParent, ancestorLevel);
         }
 
         /// <summary>
