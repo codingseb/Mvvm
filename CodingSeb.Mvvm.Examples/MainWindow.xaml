@@ -26,6 +26,7 @@
         <TextBlock Text="{Eval '((double)(#TextBox1.Text) + Value2).ToString()'}" />
         <Grid Tag="InterGrid">
             <StackPanelEx Tag="Child" Orientation="Horizontal" MarginBetweenChildren="10" >
+                <TextBlock Tag="Self" Text="{Eval '$self.Tag'}" />
                 <TextBlock Text="{Eval '$parent.Tag'}" />
                 <TextBlock Text="{Eval '$parent[StackPanelEx].Tag'}" />
                 <TextBlock Text="{Eval '$parent[StackPanelEx;1].Tag'}" />

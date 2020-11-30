@@ -157,7 +157,7 @@ namespace CodingSeb.Mvvm.UIHelpers
         protected class InternalExpressionEvaluator : ExpressionEvaluator.ExpressionEvaluator
         {
             private static readonly Regex elementNameRegex =
-                new Regex(@"^(\#(?<ElementName>[\p{L}_][\p{L}_0-9]*))|(?<Parent>\$parent(\[\s*((?<AncestorLevel>\d+)|(?<AncestorType>[^;\] \t]+)(\s*;\s*(?<AncestorLevel>\d+))?)\s*\])?)");
+                new Regex(@"^(\#(?<ElementName>[\p{L}_][\p{L}_0-9]*))|(?<Self>\$self)|(?<Parent>\$parent(\[\s*((?<AncestorLevel>\d+)|(?<AncestorType>[^;\] \t]+)(\s*;\s*(?<AncestorLevel>\d+))?)\s*\])?)");
 
             public IServiceProvider ServiceProvider { get; set; }
             public DependencyObject TargetObject { get; set; }
@@ -185,6 +185,10 @@ namespace CodingSeb.Mvvm.UIHelpers
                         if (match.Groups["ElementName"].Success)
                         {
                             BindingsSourcesDict[name] = new Reference(match.Groups["ElementName"].Value).ProvideValue(ServiceProvider);
+                        }
+                        else if(match.Groups["Self"].Success)
+                        {
+                            BindingsSourcesDict[name] = TargetObject;
                         }
                         else if(match.Groups["Parent"].Success)
                         {
