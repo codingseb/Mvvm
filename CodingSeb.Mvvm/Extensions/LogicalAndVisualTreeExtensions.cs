@@ -171,6 +171,25 @@ namespace System.Windows
             return null;
         }
 
+        public static object FindNearestResource(this DependencyObject self, object resourceKey)
+        {
+            FrameworkElement frameworkElement = self as FrameworkElement ?? self.FindLogicalParent<FrameworkElement>();
+            object resource = frameworkElement?.Resources[resourceKey];
+
+            while (frameworkElement != null && resource == null)
+            {
+                frameworkElement = frameworkElement.FindLogicalParent<FrameworkElement>();
+                resource = frameworkElement?.Resources[resourceKey];
+            }
+
+            if (resource == null)
+            {
+                resource = Application.Current.Resources[resourceKey];
+            }
+
+            return resource;
+        }
+
         /// <summary>
         /// Get an enumerable of all sub elements in logical tree of the current element
         /// </summary>

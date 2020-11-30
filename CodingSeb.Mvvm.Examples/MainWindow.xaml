@@ -19,6 +19,9 @@
         
     </Window.Resources>
     <StackPanelEx Tag="GrandParent">
+        <StackPanelEx.Resources>
+            <sys:String x:Key="ResOnGrandParent">Resource in GrandParent</sys:String>
+        </StackPanelEx.Resources>
         <AutoGrid Columns="Auto,*" >
             <Label Content="#TextBox1" />
             <TextBox x:Name="TextBox1" />
@@ -26,9 +29,13 @@
             <TextBox Text="{Binding Value1, UpdateSourceTrigger=PropertyChanged}" />
             <Label Content="Value2" />
             <TextBox Text="{Binding Value2, UpdateSourceTrigger=PropertyChanged}" />
+            <Label Content="ExpressionTextBox" />
+            <TextBox x:Name="ExpressionTextBox" Text="$parent[StackPanel]" />
         </AutoGrid>
         <TextBlock Text="{Eval '(Value1 + Value2).ToString()'}" />
         <TextBlock Text="{Eval '((double)(#TextBox1.Text) + Value2).ToString()'}" />
+        <TextBlock Text="{Eval '((double)(#TextBox1.Text) + Value2).ToString()', FallbackValue='Failed'}" />
+        <TextBlock Text="{Eval 'Evaluate(#ExpressionTextBox.Text).ToString()', FallbackValue='Evaluation failed'}" />
         <Grid Tag="InterGrid">
             <StackPanelEx Tag="Parent" Orientation="Horizontal" MarginBetweenChildren="10" >
                 <StackPanelEx.Resources>

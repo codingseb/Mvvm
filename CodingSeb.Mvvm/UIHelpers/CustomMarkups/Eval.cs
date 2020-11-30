@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Markup;
 using System.Windows.Media;
@@ -42,6 +44,11 @@ namespace CodingSeb.Mvvm.UIHelpers
         //public BindingBase ExpressionBinding { get; set; }
 
         /// <summary>
+        /// The value to return if something go wrong in bindings or evaluation.
+        /// </summary>
+        public object FallbackValue { get; set; }
+
+        /// <summary>
         /// Si mis à <c>true</c> on récupère le résultat mais on ne rend pas l'Eval dynamic en créant des Binding sur les éléments qui les supportent.
         /// Par défaut : <c>false</c>
         /// </summary>
@@ -68,8 +75,8 @@ namespace CodingSeb.Mvvm.UIHelpers
 
             var evaluator = new InternalExpressionEvaluator(frameworkElement?.DataContext)
             {
-                ServiceProvider = serviceProvider,
-                TargetObject = targetObject
+                TargetObject = targetObject,
+                TargetProperty = targetProperty
             };
 
             evaluator.StaticTypesForExtensionsMethods.Add(typeof(LogicalAndVisualTreeExtensions));
@@ -79,6 +86,7 @@ namespace CodingSeb.Mvvm.UIHelpers
                 Evaluator = evaluator,
                 Expression = Expression,
                 DataContext = dataContext,
+                FallbackValue = FallbackValue,
             };
 
             MultiBinding multiBinding = new MultiBinding()
@@ -110,8 +118,10 @@ namespace CodingSeb.Mvvm.UIHelpers
             {
                 internalConverter.LastValue = evaluator.Evaluate(Expression);
             }
-            catch (Exception e)
+            catch
             {
+                if (FallbackValue != null)
+                    internalConverter.LastValue = FallbackValue;
             }
 
             evaluator.PreEvaluateVariable -= PreEvaluateVariables;
@@ -136,6 +146,7 @@ namespace CodingSeb.Mvvm.UIHelpers
             public string Expression { get; set; }
             public object DataContext { get; set; }
             public object LastValue { get; set; }
+            public object FallbackValue { get; set; }
 
             public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
             {
@@ -143,7 +154,13 @@ namespace CodingSeb.Mvvm.UIHelpers
                 {
                     LastValue = Evaluator.Evaluate(Expression);
                 }
-                catch { }
+                catch
+                {
+                    if(FallbackValue != null)
+                    {
+                        LastValue = FallbackValue;
+                    }
+                }
 
                 return LastValue;
             }
@@ -157,12 +174,15 @@ namespace CodingSeb.Mvvm.UIHelpers
         protected class InternalExpressionEvaluator : ExpressionEvaluator.ExpressionEvaluator
         {
             private static readonly Regex elementNameRegex =
-                new Regex(@"^(\#(?<ElementName>[\p{L}_][\p{L}_0-9]*))|([@](?<ResourceKey>[\p{L}_][\p{L}_0-9]*))|(?<Self>\$self)|(?<Parent>\$parent(\[\s*((?<AncestorLevel>\d+)|(?<AncestorType>[^;\] \t]+)(\s*;\s*(?<AncestorLevel>\d+))?)\s*\])?)");
+                new Regex(@"^((\#(?<ElementName>[\p{L}_][\p{L}_0-9]*))|([@](?<ResourceKey>[\p{L}_][\p{L}_0-9]*))|(?<Self>\$self)|(?<Parent>\$parent(\[\s*((?<AncestorLevel>\d+)|(?<AncestorType>[^;\] \t]+)(\s*;\s*(?<AncestorLevel>\d+))?)\s*\])?))");
 
-            public IServiceProvider ServiceProvider { get; set; }
             public DependencyObject TargetObject { get; set; }
+            public DependencyProperty TargetProperty { get; set; }
 
             public Dictionary<string, object> BindingsSourcesDict = new Dictionary<string, object>();
+
+            public static readonly DependencyProperty InternalExpressionEvaluatorMetaDataProperty =
+                DependencyProperty.RegisterAttached("InternalExpressionEvaluatorMetaData", typeof(object), typeof(InternalExpressionEvaluator));
 
             public InternalExpressionEvaluator(object contextObject) : base(contextObject)
             {}
@@ -184,25 +204,32 @@ namespace CodingSeb.Mvvm.UIHelpers
                     {
                         if (match.Groups["ElementName"].Success)
                         {
-                            BindingsSourcesDict[name] = new Reference(match.Groups["ElementName"].Value).ProvideValue(ServiceProvider);
+                            BindingsSourcesDict[name] = (TargetObject as FrameworkElement ?? TargetObject.FindLogicalParent<FrameworkElement>()).FindName(match.Groups["ElementName"].Value);
                         }
-                        else if(match.Groups["Self"].Success)
+                        else if (match.Groups["Self"].Success)
                         {
                             BindingsSourcesDict[name] = TargetObject;
                         }
-                        else if(match.Groups["ResourceKey"].Success)
+                        else if (match.Groups["ResourceKey"].Success)
                         {
-                            BindingsSourcesDict[name] = new StaticResourceExtension(match.Groups["ResourceKey"].Value).ProvideValue(ServiceProvider);
+                            BindingsSourcesDict[name] = TargetObject.FindNearestResource(match.Groups["ResourceKey"].Value);
                         }
-                        else if(match.Groups["Parent"].Success)
+                        else if (match.Groups["Parent"].Success)
                         {
                             if (match.Groups["AncestorType"].Success)
                             {
+                                BindingOperations.SetBinding(TargetObject, InternalExpressionEvaluatorMetaDataProperty, new Binding()
+                                {
+                                    Source = new TypeExtension(match.Groups["AncestorType"].Value),
+                                });
+
+                                TargetObject.InvalidateProperty(InternalExpressionEvaluatorMetaDataProperty);
+                                object type = TargetObject.GetValue(InternalExpressionEvaluatorMetaDataProperty);
+
                                 BindingsSourcesDict[name] = TargetObject
-                                    .FindVisualParent(new TypeExtension(match.Groups["AncestorType"].Value).ProvideValue(ServiceProvider) as Type
-                                    , match.Groups["AncestorLevel"].Success ? int.Parse(match.Groups["AncestorLevel"].Value) : 1);
+                                    .FindVisualParent(Type.GetType(match.Groups["AncestorType"].Value), match.Groups["AncestorLevel"].Success ? int.Parse(match.Groups["AncestorLevel"].Value) : 1);
                             }
-                            else if(match.Groups["AncestorLevel"].Success)
+                            else if (match.Groups["AncestorLevel"].Success)
                             {
                                 BindingsSourcesDict[name] = TargetObject.FindVisualParent(typeof(DependencyObject), int.Parse(match.Groups["AncestorLevel"].Value));
                             }
