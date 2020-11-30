@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Markup;
 using System.Windows.Media;
+using System.Xaml;
 
 namespace CodingSeb.Mvvm.UIHelpers
 {
@@ -73,10 +74,22 @@ namespace CodingSeb.Mvvm.UIHelpers
             FrameworkElement frameworkElement = targetObject as FrameworkElement;
             object dataContext = frameworkElement?.DataContext;
 
+            IXamlNamespaceResolver namespaceResolver = serviceProvider.GetService(typeof(IXamlNamespaceResolver)) as IXamlNamespaceResolver;
+            XamlSchemaContext xamlSchemaContext = (serviceProvider.GetService(typeof(IXamlSchemaContextProvider)) as IXamlSchemaContextProvider)?.SchemaContext;
+
+            var namespaceDictionary = namespaceResolver?.GetNamespacePrefixes().ToDictionary(namespaceDefinition => namespaceDefinition.Prefix);
+
+            Dictionary<string, Type> xamlTypeNameToTypeDict = new Dictionary<string, Type>();
+
+            xamlSchemaContext?.GetAllXamlNamespaces().ToList().ForEach(ns =>
+                xamlSchemaContext?.GetAllXamlTypes(ns).Where(t => typeof(DependencyObject).IsAssignableFrom(t.UnderlyingType)).ToList()
+                    .ForEach(xamlType => xamlTypeNameToTypeDict[xamlType.Name] = xamlType.UnderlyingType));
+
             var evaluator = new InternalExpressionEvaluator(frameworkElement?.DataContext)
             {
                 TargetObject = targetObject,
-                TargetProperty = targetProperty
+                TargetProperty = targetProperty,
+                XamlTypesDict = xamlTypeNameToTypeDict
             };
 
             evaluator.StaticTypesForExtensionsMethods.Add(typeof(LogicalAndVisualTreeExtensions));
@@ -180,9 +193,9 @@ namespace CodingSeb.Mvvm.UIHelpers
             public DependencyProperty TargetProperty { get; set; }
 
             public Dictionary<string, object> BindingsSourcesDict = new Dictionary<string, object>();
+            public Dictionary<string,Type> XamlTypesDict { get; set; }
 
-            public static readonly DependencyProperty InternalExpressionEvaluatorMetaDataProperty =
-                DependencyProperty.RegisterAttached("InternalExpressionEvaluatorMetaData", typeof(object), typeof(InternalExpressionEvaluator));
+            public MultiBinding LinkedMultiBinding { get; set; }
 
             public InternalExpressionEvaluator(object contextObject) : base(contextObject)
             {}
@@ -218,16 +231,11 @@ namespace CodingSeb.Mvvm.UIHelpers
                         {
                             if (match.Groups["AncestorType"].Success)
                             {
-                                BindingOperations.SetBinding(TargetObject, InternalExpressionEvaluatorMetaDataProperty, new Binding()
+                                if (XamlTypesDict.ContainsKey(match.Groups["AncestorType"].Value))
                                 {
-                                    Source = new TypeExtension(match.Groups["AncestorType"].Value),
-                                });
-
-                                TargetObject.InvalidateProperty(InternalExpressionEvaluatorMetaDataProperty);
-                                object type = TargetObject.GetValue(InternalExpressionEvaluatorMetaDataProperty);
-
-                                BindingsSourcesDict[name] = TargetObject
-                                    .FindVisualParent(Type.GetType(match.Groups["AncestorType"].Value), match.Groups["AncestorLevel"].Success ? int.Parse(match.Groups["AncestorLevel"].Value) : 1);
+                                    BindingsSourcesDict[name] = TargetObject
+                                        .FindVisualParent(XamlTypesDict[match.Groups["AncestorType"].Value], match.Groups["AncestorLevel"].Success ? int.Parse(match.Groups["AncestorLevel"].Value) : 1);
+                                }
                             }
                             else if (match.Groups["AncestorLevel"].Success)
                             {

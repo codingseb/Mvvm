@@ -30,7 +30,7 @@
             <Label Content="Value2" />
             <TextBox Text="{Binding Value2, UpdateSourceTrigger=PropertyChanged}" />
             <Label Content="ExpressionTextBox" />
-            <TextBox x:Name="ExpressionTextBox" Text="$parent[StackPanel]" />
+            <TextBox x:Name="ExpressionTextBox" Text="$parent[StackPanelEx]" />
         </AutoGrid>
         <TextBlock Text="{Eval '(Value1 + Value2).ToString()'}" />
         <TextBlock Text="{Eval '((double)(#TextBox1.Text) + Value2).ToString()'}" />
