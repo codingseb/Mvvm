@@ -72,6 +72,8 @@ namespace CodingSeb.Mvvm.UIHelpers
                 TargetObject = targetObject
             };
 
+            evaluator.StaticTypesForExtensionsMethods.Add(typeof(LogicalAndVisualTreeExtensions));
+
             var internalConverter = new EvalInternalConverter()
             {
                 Evaluator = evaluator,
