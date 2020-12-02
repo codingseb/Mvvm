@@ -101,8 +101,7 @@ namespace CodingSeb.Mvvm.UIHelpers
                 binding = CreateDataContextBinding((FrameworkElement)rootObjectProvider.RootObject, Binding);
             }
 
-            var provideValue = binding.ProvideValue(serviceProvider);
-            return provideValue;
+            return binding.ProvideValue(serviceProvider);
         }
 
         private static Binding CreateElementNameBinding(Binding original, object source)

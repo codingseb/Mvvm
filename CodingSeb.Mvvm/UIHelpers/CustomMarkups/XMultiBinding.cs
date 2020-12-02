@@ -144,10 +144,8 @@ namespace CodingSeb.Mvvm.UIHelpers
             if (Converter == null)
                 throw new ArgumentNullException(nameof(Converter));
 
-            if (!(serviceProvider.GetService(typeof(IProvideValueTarget)) is IProvideValueTarget service))
-                return this;
-
-            if (!(service.TargetObject is DependencyObject targetObject)
+            if (!(serviceProvider.GetService(typeof(IProvideValueTarget)) is IProvideValueTarget service)
+                || !(service.TargetObject is DependencyObject targetObject)
                 || !(service.TargetProperty is DependencyProperty targetProperty))
             {
                 return this;

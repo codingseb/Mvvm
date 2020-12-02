@@ -22,20 +22,32 @@
         <StackPanelEx.Resources>
             <sys:String x:Key="ResOnGrandParent">Resource in GrandParent</sys:String>
         </StackPanelEx.Resources>
-        <AutoGrid Columns="Auto,*" >
+        <AutoGrid Columns="Auto,*,Auto,Auto" >
             <Label Content="#TextBox1" />
-            <TextBox x:Name="TextBox1" />
+            <TextBox x:Name="TextBox1" Grid.ColumnSpan="3" />
             <Label Content="Value1" />
-            <DockPanel>
-                <Button Content="Increment (EventToCommand)" Click="{EventToCommand IncrementValue1Command}"
-                        VerticalAlignment="Center"
-                        DockPanel.Dock="Right"/>
-                <TextBox Text="{Binding Value1, UpdateSourceTrigger=PropertyChanged}" />
-            </DockPanel>
+            <TextBox Text="{Binding Value1, UpdateSourceTrigger=PropertyChanged}" />
+            <Button Content="Increment (Click to command)" Click="{XCommand IncrementValue1Command}"
+                    VerticalAlignment="Center"/>
+            <Button Content="Decrement (Click to method)" Click="{XCommand DecrementValue1}"
+                    VerticalAlignment="Center"/>
             <Label Content="Value2" />
             <TextBox Text="{Binding Value2, UpdateSourceTrigger=PropertyChanged}" />
+            <Button Content="Increment (Command to command)" Command="{XCommand IncrementValue2Command}"
+                        VerticalAlignment="Center"/>
+            <Button Content="Decrement (Command to method)" Command="{XCommand DecrementValue2}"
+                        VerticalAlignment="Center"/>
+            <Label Content="XCommandExpression" />
+            <TextBox x:Name="XCommandExpressionTextBox" 
+                     Text="MessageBox.Show(&quot;Hello&quot;)"/>
+            <Button Content="Click to Expression" Click="{XCommand Evaluate(#XCommandExpressionTextBox.Text), CatchEvaluationExceptions=True}"
+                    VerticalAlignment="Center"/>
+            <Button Content="Command to Expression" Command="{XCommand Evaluate(#XCommandExpressionTextBox.Text)}"
+                    VerticalAlignment="Center"/>
             <Label Content="ExpressionTextBox" />
-            <TextBox x:Name="ExpressionTextBox" Text="$parent[StackPanelEx]" />
+            <TextBox x:Name="ExpressionTextBox" 
+                     Text="$parent[StackPanelEx]"
+                     Grid.ColumnSpan="3"/>
         </AutoGrid>
         <TextBlock Text="{Eval '(Value1 + Value2).ToString()'}" />
         <TextBlock Text="{Eval '((double)(#TextBox1.Text) + Value2).ToString()'}" />

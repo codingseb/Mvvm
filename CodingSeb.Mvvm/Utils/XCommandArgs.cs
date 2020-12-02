@@ -2,7 +2,7 @@
 
 namespace CodingSeb.Mvvm
 {
-    public class EventToCommandArgs
+    public class XCommandArgs
     {
         public object Sender { get; set; }
         public EventArgs EventArgs { get; set; }
