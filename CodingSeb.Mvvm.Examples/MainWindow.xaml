@@ -26,7 +26,12 @@
             <Label Content="#TextBox1" />
             <TextBox x:Name="TextBox1" />
             <Label Content="Value1" />
-            <TextBox Text="{Binding Value1, UpdateSourceTrigger=PropertyChanged}" />
+            <DockPanel>
+                <Button Content="Increment (EventToCommand)" Click="{EventToCommand IncrementValue1Command}"
+                        VerticalAlignment="Center"
+                        DockPanel.Dock="Right"/>
+                <TextBox Text="{Binding Value1, UpdateSourceTrigger=PropertyChanged}" />
+            </DockPanel>
             <Label Content="Value2" />
             <TextBox Text="{Binding Value2, UpdateSourceTrigger=PropertyChanged}" />
             <Label Content="ExpressionTextBox" />
@@ -51,6 +56,7 @@
                 <TextBlock Text="{Eval '$parent[3].Tag'}" />
                 <TextBlock Text="{Eval @ResOnParent}" />
                 <TextBlock Text="{Eval @ResOnWindow}" />
+                <TextBlock Text="{Eval 'Evaluate(#ExpressionTextBox.Text).ToString()', FallbackValue='Evaluation failed'}" />
             </StackPanelEx>
         </Grid>
         <StackPanelEx Orientation="Horizontal" MarginBetweenChildren="10" >

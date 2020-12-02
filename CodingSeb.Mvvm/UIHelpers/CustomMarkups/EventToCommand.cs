@@ -31,7 +31,7 @@ namespace CodingSeb.Mvvm.UIHelpers
 
         private void InvokeCommand(object sender, EventArgs args)
         {
-            if (!string.IsNullOrEmpty(Command) 
+            if (!string.IsNullOrEmpty(Command)
                 && sender is FrameworkElement control)
             {
                 // Find control's ViewModel
