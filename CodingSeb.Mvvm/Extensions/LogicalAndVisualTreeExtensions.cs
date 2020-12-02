@@ -195,13 +195,13 @@ namespace System.Windows
         /// </summary>
         /// <param name="node"></param>
         /// <returns></returns>
-        public static IEnumerable<object> LogicalTreeDepthFirstTraversal(this DependencyObject node)
+        public static IEnumerable<object> LogicalChildren(this DependencyObject node)
         {
             if (node == null) yield break;
             yield return node;
 
             foreach (var child in LogicalTreeHelper.GetChildren(node).OfType<DependencyObject>()
-                .SelectMany(LogicalTreeDepthFirstTraversal))
+                .SelectMany(LogicalChildren))
             {
                 yield return child;
             }
@@ -212,7 +212,7 @@ namespace System.Windows
         /// </summary>
         /// <param name="node"></param>
         /// <returns></returns>
-        public static IEnumerable<object> VisualTreeDepthFirstTraversal(this DependencyObject node)
+        public static IEnumerable<object> VisualChildren(this DependencyObject node)
         {
             if (node == null) yield break;
             yield return node;
@@ -220,7 +220,7 @@ namespace System.Windows
             for (var i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++)
             {
                 var child = VisualTreeHelper.GetChild(node, i);
-                foreach (var d in child.VisualTreeDepthFirstTraversal())
+                foreach (var d in child.VisualChildren())
                 {
                     yield return d;
                 }

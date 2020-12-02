@@ -64,8 +64,6 @@ namespace CodingSeb.Mvvm.UIHelpers
                 OptionScriptNeedSemicolonAtTheEndOfLastExpression = false
             };
 
-            evaluator.StaticTypesForExtensionsMethods.Add(typeof(LogicalAndVisualTreeExtensions));
-
             var internalConverter = new EvalInternalConverter()
             {
                 Evaluator = evaluator,
