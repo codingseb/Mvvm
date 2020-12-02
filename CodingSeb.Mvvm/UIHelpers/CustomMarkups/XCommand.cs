@@ -73,6 +73,10 @@ namespace CodingSeb.Mvvm.UIHelpers
                     {
                         try
                         {
+                            Evaluator.Variables["Sender"] = sender;
+                            Evaluator.Variables["EventArgs"] = args;
+                            Evaluator.Variables["CommandParameter"] = CommandParameter;
+
                             Evaluator.Evaluate(CommandOrMethodOrExpression);
                         }
                         catch when (CatchEvaluationExceptions)
