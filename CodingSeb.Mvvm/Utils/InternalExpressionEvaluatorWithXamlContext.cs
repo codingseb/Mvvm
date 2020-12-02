@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Media;
 using System.Xaml;
 
@@ -36,6 +37,7 @@ namespace CodingSeb.Mvvm
         {
             Namespaces.Add("System.Windows");
             Namespaces.Add("System.Windows.Controls");
+            Namespaces.Add("System.Windows.Media");
             Namespaces.Add("System.Diagnostics");
             ParsingMethods.Insert(0, EvaluateBindingVariables);
         }
