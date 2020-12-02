@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
-using System.Linq;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Markup;
-using System.Xaml;
 
 namespace CodingSeb.Mvvm.UIHelpers
 {
@@ -20,9 +17,9 @@ namespace CodingSeb.Mvvm.UIHelpers
         public Eval()
         { }
 
-        public Eval(string expression)
+        public Eval(string evaluate)
         {
-            Expression = expression;
+            Evaluate = evaluate;
         }
 
         #endregion
@@ -30,8 +27,8 @@ namespace CodingSeb.Mvvm.UIHelpers
         /// <summary>
         /// The Expression to Evaluate
         /// </summary>
-        [ConstructorArgument("expression")]
-        public string Expression { get; set; }
+        [ConstructorArgument("evaluate")]
+        public string Evaluate { get; set; }
 
         /// <summary>
         /// The value to return if something go wrong in bindings or evaluation.
@@ -64,6 +61,7 @@ namespace CodingSeb.Mvvm.UIHelpers
             var evaluator = new InternalExpressionEvaluatorWithXamlContext(dataContext, serviceProvider)
             {
                 TargetObject = targetObject,
+                OptionScriptNeedSemicolonAtTheEndOfLastExpression = false
             };
 
             evaluator.StaticTypesForExtensionsMethods.Add(typeof(LogicalAndVisualTreeExtensions));
@@ -71,7 +69,7 @@ namespace CodingSeb.Mvvm.UIHelpers
             var internalConverter = new EvalInternalConverter()
             {
                 Evaluator = evaluator,
-                Expression = Expression,
+                Evaluate = Evaluate,
                 DataContext = dataContext,
                 FallbackValue = FallbackValue,
             };
@@ -103,7 +101,7 @@ namespace CodingSeb.Mvvm.UIHelpers
 
             try
             {
-                internalConverter.LastValue = evaluator.Evaluate(Expression);
+                internalConverter.LastValue = evaluator.ScriptEvaluate(Evaluate);
             }
             catch
             {
@@ -130,7 +128,7 @@ namespace CodingSeb.Mvvm.UIHelpers
         {
             public ExpressionEvaluator.ExpressionEvaluator Evaluator { get; set; }
 
-            public string Expression { get; set; }
+            public string Evaluate { get; set; }
             public object DataContext { get; set; }
             public object LastValue { get; set; }
             public object FallbackValue { get; set; }
@@ -139,9 +137,9 @@ namespace CodingSeb.Mvvm.UIHelpers
             {
                 try
                 {
-                    LastValue = Evaluator.Evaluate(Expression);
+                    LastValue = Evaluator.ScriptEvaluate(Evaluate);
                 }
-                catch
+                catch(Exception e)
                 {
                     if(FallbackValue != null)
                     {

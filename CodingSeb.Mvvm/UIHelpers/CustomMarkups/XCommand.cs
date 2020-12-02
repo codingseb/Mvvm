@@ -12,8 +12,8 @@ namespace CodingSeb.Mvvm.UIHelpers
     /// </summary>
     public class XCommand : MarkupExtension
     {
-        [ConstructorArgument("commandOrMethodOrExpression")]
-        public string CommandOrMethodOrExpression { get; set; }
+        [ConstructorArgument("commandOrMethodOrEvaluation")]
+        public string CommandOrMethodOrEvaluation { get; set; }
 
         /// <summary>
         /// if true pass andEventToCommandArgs object with commandparameter event sender and event args, if false just CommandParameter
@@ -26,9 +26,9 @@ namespace CodingSeb.Mvvm.UIHelpers
 
         internal InternalExpressionEvaluatorWithXamlContext Evaluator { get; set; }
 
-        public XCommand(string commandOrMethodOrExpression)
+        public XCommand(string commandOrMethodOrEvaluation)
         {
-            CommandOrMethodOrExpression = commandOrMethodOrExpression;
+            CommandOrMethodOrEvaluation = commandOrMethodOrEvaluation;
         }
 
         public XCommand()
@@ -36,7 +36,7 @@ namespace CodingSeb.Mvvm.UIHelpers
 
         private void InvokeCommand(object sender, EventArgs args)
         {
-            if (!string.IsNullOrEmpty(CommandOrMethodOrExpression)
+            if (!string.IsNullOrEmpty(CommandOrMethodOrEvaluation)
                 && sender is FrameworkElement frameworkElement)
             {
                 // Find control's ViewModel
@@ -45,7 +45,7 @@ namespace CodingSeb.Mvvm.UIHelpers
                 {
                     Type viewModelType = viewmodel.GetType();
 
-                    if (viewModelType.GetProperty(CommandOrMethodOrExpression)?.GetValue(viewmodel) is ICommand command)
+                    if (viewModelType.GetProperty(CommandOrMethodOrEvaluation)?.GetValue(viewmodel) is ICommand command)
                     {
                         object objArg = UseEventToCommandArgs ?
                         new XCommandArgs()
@@ -64,7 +64,7 @@ namespace CodingSeb.Mvvm.UIHelpers
                     }
                     else if(viewModelType
                         .GetMethods()
-                        .Where(methodInfo => methodInfo.Name.Equals(CommandOrMethodOrExpression))
+                        .Where(methodInfo => methodInfo.Name.Equals(CommandOrMethodOrEvaluation))
                         .ToArray() is MethodInfo[] methodInfos && methodInfos.Length > 0)
                     {
                         methodInfos[0].Invoke(viewmodel, new object[0]);
@@ -77,7 +77,7 @@ namespace CodingSeb.Mvvm.UIHelpers
                             Evaluator.Variables["EventArgs"] = args;
                             Evaluator.Variables["CommandParameter"] = CommandParameter;
 
-                            Evaluator.Evaluate(CommandOrMethodOrExpression);
+                            Evaluator.ScriptEvaluate(CommandOrMethodOrEvaluation);
                         }
                         catch when (CatchEvaluationExceptions)
                         {}
@@ -105,6 +105,7 @@ namespace CodingSeb.Mvvm.UIHelpers
                 Evaluator = new InternalExpressionEvaluatorWithXamlContext(dataContext, serviceProvider)
                 {
                     TargetObject = targetObject,
+                    OptionScriptNeedSemicolonAtTheEndOfLastExpression = false
                 };
 
                 if (service.TargetProperty is EventInfo eventInfo)
