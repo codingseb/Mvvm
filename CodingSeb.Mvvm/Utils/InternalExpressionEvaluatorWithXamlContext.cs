@@ -36,6 +36,7 @@ namespace CodingSeb.Mvvm
         {
             Namespaces.Add("System.Windows");
             Namespaces.Add("System.Windows.Controls");
+            Namespaces.Add("System.Diagnostics");
             ParsingMethods.Insert(0, EvaluateBindingVariables);
         }
 
