@@ -14,14 +14,18 @@ namespace CodingSeb.Mvvm.UIHelpers
     /// </summary>
     public class Eval : MarkupExtension
     {
+        private BindingBase evaluateBinding;
         #region Constructor and ManageArgs
 
         public Eval()
         { }
 
-        public Eval(string evaluate)
+        public Eval(object evaluate)
         {
-            Evaluate = evaluate;
+            if(evaluate is BindingBase evaluateBinding)
+                EvaluateBinding = evaluateBinding;
+            else
+                Evaluate = evaluate.ToString();
         }
 
         #endregion
@@ -29,13 +33,27 @@ namespace CodingSeb.Mvvm.UIHelpers
         /// <summary>
         /// The Expression to Evaluate
         /// </summary>
-        [ConstructorArgument("evaluate")]
         public string Evaluate { get; set; }
+
+        public BindingBase EvaluateBinding
+        {
+            get { return evaluateBinding; }
+            set
+            {
+                evaluateBinding = value;
+                AutoBinding = EvalAutoBinding.AutoBindingAtEachEvaluation;
+            }
+        }
 
         /// <summary>
         /// The value to return if something go wrong in bindings or evaluation.
         /// </summary>
         public object FallbackValue { get; set; }
+
+        /// <summary>
+        /// To StringFormat the result.
+        /// </summary>
+        public string StringFormat { get; set; }
 
         /// <summary>
         /// To specify the way evaluation auto create bindings to update the result on changes of used dependencyProperties and INotifyPropertyChanged
@@ -70,17 +88,27 @@ namespace CodingSeb.Mvvm.UIHelpers
             {
                 Evaluator = evaluator,
                 Evaluate = Evaluate,
+                EvaluateBinding = EvaluateBinding,
                 DataContext = dataContext,
                 FallbackValue = FallbackValue,
+                StringFormat = StringFormat,
                 TargetObject = targetObject,
                 TargetProperty = targetProperty,
-                ResetAutoBindings = AutoBinding == EvalAutoBinding.AutoBindingAtEachEvaluation
+                ResetAutoBindings = AutoBinding == EvalAutoBinding.AutoBindingAtEachEvaluation,
+                IsInHierarchy = hierarchyBuilding
             };
 
             MultiBinding multiBinding = new MultiBinding()
             {
                 Converter = internalConverter
             };
+
+            if (EvaluateBinding is Binding binding)
+                multiBinding.Bindings.Add(binding);
+            else if (EvaluateBinding is MultiBinding evalMultiBinding)
+                evalMultiBinding.Bindings.ToList().ForEach(multiBinding.Bindings.Add);
+            else
+                multiBinding.Bindings.Add(new Binding() { Source = Evaluate, Mode=BindingMode.OneWay });
 
             if (AutoBinding != EvalAutoBinding.DoNotAutoBinding)
             {
@@ -89,7 +117,18 @@ namespace CodingSeb.Mvvm.UIHelpers
 
             try
             {
-                internalConverter.LastValue = evaluator.ScriptEvaluate(Evaluate);
+                if (string.IsNullOrEmpty(Evaluate))
+                {
+                    internalConverter.LastValue = evaluator.ScriptEvaluate(Evaluate);
+
+                    if (StringFormat != null)
+                        internalConverter.LastValue = string.Format(StringFormat, internalConverter.LastValue);
+
+                    if (!hierarchyBuilding)
+                    {
+                        internalConverter.LastValue = MarkupStandardTypeConverter.ConvertValueForDependencyProperty(internalConverter.LastValue, targetProperty);
+                    }
+                }
             }
             catch
             {
@@ -104,11 +143,6 @@ namespace CodingSeb.Mvvm.UIHelpers
 
             if (AutoBinding != EvalAutoBinding.DoNotAutoBinding)
             {
-                multiBinding.Bindings.Add(new Binding(nameof(EvalInternalConverter.EvaluationCounter))
-                {
-                    Source = internalConverter
-                });
-
                 if (hierarchyBuilding)
                     return multiBinding;
 
@@ -120,33 +154,22 @@ namespace CodingSeb.Mvvm.UIHelpers
             return internalConverter.LastValue;
         }
 
-        protected class EvalInternalConverter : IMultiValueConverter, INotifyPropertyChanged
+        protected class EvalInternalConverter : IMultiValueConverter
         {
-            private int evaluationCounter;
             public ExpressionEvaluator.ExpressionEvaluator Evaluator { get; set; }
-            private List<INotifyPropertyChanged> NotifyProperyChangedList { get; } = new List<INotifyPropertyChanged>();
             private Dictionary<INotifyPropertyChanged, List<string>> PropertiesToBindDict { get; } = new Dictionary<INotifyPropertyChanged, List<string>>();
             private List<DependencyPropertyListener> DependencyPropertyListeners { get; } = new List<DependencyPropertyListener>();
 
+            public bool IsInHierarchy { get; set; }
             public string Evaluate { get; set; }
+            public BindingBase EvaluateBinding { get; set; }
             public object DataContext { get; set; }
             public object LastValue { get; set; }
             public object FallbackValue { get; set; }
+            public string StringFormat { get; set; }
             public bool ResetAutoBindings { get; set; }
             public DependencyObject TargetObject { get; set; }
             public DependencyProperty TargetProperty { get; set; }
-
-            public int EvaluationCounter
-            {
-                get { return evaluationCounter; }
-                set
-                {
-                    evaluationCounter = value;
-                    PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(EvaluationCounter)));
-                }
-            }
-
-            public event PropertyChangedEventHandler PropertyChanged;
 
             public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
             {
@@ -160,7 +183,20 @@ namespace CodingSeb.Mvvm.UIHelpers
 
                 try
                 {
+                    if (EvaluateBinding is MultiBinding evalMultiBinding)
+                        Evaluate = evalMultiBinding.Converter.Convert(values.Take(evalMultiBinding.Bindings.Count).ToArray(), null, evalMultiBinding.ConverterParameter, evalMultiBinding.ConverterCulture).ToString();
+                    else if(EvaluateBinding != null)
+                        Evaluate = values[0].ToString();
+
                     LastValue = Evaluator.ScriptEvaluate(Evaluate);
+
+                    if (StringFormat != null)
+                        LastValue = string.Format(StringFormat, LastValue);
+
+                    if (!IsInHierarchy)
+                    {
+                        LastValue = MarkupStandardTypeConverter.ConvertValueForDependencyProperty(LastValue, TargetProperty);
+                    }
                 }
                 catch
                 {

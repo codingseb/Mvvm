@@ -68,7 +68,7 @@
                 <TextBlock Text="{Eval $parent[3].Tag}" />
                 <TextBlock Text="{Eval @ResOnParent}" />
                 <TextBlock Text="{Eval @ResOnWindow}" />
-                <TextBlock Text="{Eval 'ScriptEvaluate(#ExpressionTextBox.Text).ToString()', FallbackValue='Evaluation failed', AutoBinding=AutoBindingAtEachEvaluation}" />
+                <TextBlock Text="{Eval {Binding Text, ElementName=ExpressionTextBox}, FallbackValue='Evaluation failed'}" />
             </StackPanelEx>
         </Grid>
         <StackPanelEx Orientation="Horizontal" MarginBetweenChildren="10" >
@@ -101,6 +101,6 @@
                   IsChecked="{XMultiBinding {Binding IsChecked, ElementName=CheckBox1}, {Binding Source={StaticResource FalseBool}, Mode=OneWay}, Converter={BoolMultiBindingOrConditionConverter}}"/>
        <CheckBox IsEnabled="False"
                   Content="1 and Eval"
-                  IsChecked="{XMultiBinding {Binding IsChecked, ElementName=CheckBox1}, {Eval 2 > 1}, Converter={BoolMultiBindingAndConditionConverter}}"/>
+                  IsChecked="{XMultiBinding {Binding IsChecked, ElementName=CheckBox1}, {Eval '2 > 1'}, Converter={BoolMultiBindingAndConditionConverter}}"/>
     </StackPanelEx>
 </Window>
