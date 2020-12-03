@@ -28,24 +28,11 @@ namespace CodingSeb.Mvvm
 
             xamlSchemaContext?.GetAllXamlNamespaces().ToList().ForEach(ns =>
                 xamlSchemaContext?.GetAllXamlTypes(ns).Where(t => typeof(DependencyObject).IsAssignableFrom(t.UnderlyingType)).ToList()
-                    .ForEach(xamlType => XamlTypesDict[xamlType.Name] = xamlType.UnderlyingType));
-
-            EvaluateVariable += InternalExpressionEvaluatorWithXamlContext_EvaluateVariable;
-        }
-
-        private void InternalExpressionEvaluatorWithXamlContext_EvaluateVariable(object sender, ExpressionEvaluator.VariableEvaluationEventArg e)
-        {
-            if(e.This == null && XamlTypesDict.ContainsKey(e.Name))
-            {
-                e.Value = new ExpressionEvaluator.ClassOrEnumType() { Type = XamlTypesDict[e.Name] };
-            }
+                    .ForEach(xamlType => Types.Add(xamlType.UnderlyingType)));
         }
 
         protected override void Init()
         {
-            Namespaces.Add("System.Windows");
-            Namespaces.Add("System.Windows.Controls");
-            Namespaces.Add("System.Windows.Media");
             Namespaces.Add("System.Diagnostics");
             StaticTypesForExtensionsMethods.Add(typeof(LogicalAndVisualTreeExtensions));
             ParsingMethods.Insert(0, EvaluateBindingVariables);
