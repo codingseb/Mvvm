@@ -156,6 +156,8 @@ namespace CodingSeb.Mvvm.UIHelpers
                 Converter = Converter,
                 ConverterParameter = ConverterParameter,
                 ConverterCultureInfo = ConverterCultureInfo,
+                IsInHierarchy = hierarchyBuilding,
+                TargetProperty = targetProperty
             };
 
             var multiBinding = new MultiBinding()
@@ -231,6 +233,8 @@ namespace CodingSeb.Mvvm.UIHelpers
             public object ConverterParameter { get; set; }
             public CultureInfo ConverterCultureInfo { get; set; }
             public List<BindingBase> Children { get; set; }
+            public bool IsInHierarchy { get; set; }
+            public DependencyProperty TargetProperty { get; set; }
 
             public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
             {
@@ -252,7 +256,14 @@ namespace CodingSeb.Mvvm.UIHelpers
                     }
                 });
 
-                return Converter.Convert(groupedBindingsResults.ToArray(), null, ConverterParameter, ConverterCultureInfo);
+                object result = Converter.Convert(groupedBindingsResults.ToArray(), null, ConverterParameter, ConverterCultureInfo);
+
+                if (!IsInHierarchy)
+                {
+                    result = MarkupStandardTypeConverter.ConvertValueForDependencyProperty(result, TargetProperty);
+                }
+
+                return result;
             }
 
             public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotImplementedException();

@@ -192,11 +192,6 @@ namespace CodingSeb.Mvvm.UIHelpers
 
                     if (StringFormat != null)
                         LastValue = string.Format(StringFormat, LastValue);
-
-                    if (!IsInHierarchy)
-                    {
-                        LastValue = MarkupStandardTypeConverter.ConvertValueForDependencyProperty(LastValue, TargetProperty);
-                    }
                 }
                 catch
                 {
@@ -206,7 +201,7 @@ namespace CodingSeb.Mvvm.UIHelpers
                     }
                 }
 
-                return LastValue;
+                return IsInHierarchy ? LastValue : MarkupStandardTypeConverter.ConvertValueForDependencyProperty(LastValue, TargetProperty);
             }
 
             public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
