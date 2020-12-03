@@ -56,13 +56,13 @@ namespace CodingSeb.Mvvm
                         Type type = (parameters[0] as ExpressionEvaluator.ClassOrEnumType)?.Type ?? parameters[0] as Type ?? typeof(DependencyObject);
                         int level = 1;
 
-                        if(parameters[0] is int)
+                        if(parameters[0] is int int0)
                         {
-                            level = (int)parameters[0];
+                            level = int0;
                         }
-                        else if(parameters.Count > 1 && parameters[1] is int)
+                        else if(parameters.Count > 1 && parameters[1] is int int1)
                         {
-                            level = (int)parameters[1];
+                            level = int1;
                         }
 
                         stack.Push(TargetObject.FindVisualParent(type, level));
