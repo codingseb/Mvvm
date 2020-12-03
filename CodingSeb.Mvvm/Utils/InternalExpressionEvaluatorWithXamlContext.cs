@@ -11,7 +11,7 @@ namespace CodingSeb.Mvvm
     internal class InternalExpressionEvaluatorWithXamlContext : ExpressionEvaluator.ExpressionEvaluator
     {
         private static readonly Regex elementNameRegex =
-            new Regex(@"^((\#(?<ElementName>[\p{L}_][\p{L}_0-9]*))|([@](?<ResourceKey>[\p{L}_][\p{L}_0-9]*))|(?<Self>\$self)|(?<Parent>\$parent(\[\s*((?<AncestorLevel>\d+)|(?<AncestorType>[^;\] \t]+)(\s*;\s*(?<AncestorLevel>\d+))?)\s*\])?))");
+            new Regex(@"^((\#(?<ElementName>[\p{L}_][\p{L}_0-9]*))|([@](?<ResourceKey>[\p{L}_][\p{L}_0-9]*))|(?<Self>\$self)|(?<Parent>\$parent(\[\s*((?<AncestorLevel>\d+)|(?<AncestorType>[^,\] \t]+)(\s*,\s*(?<AncestorLevel>\d+))?)\s*\])?))");
 
         public DependencyObject TargetObject { get; set; }
 

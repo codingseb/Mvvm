@@ -60,12 +60,12 @@
                 </StackPanelEx.Resources>
                 <TextBlock Tag="Self" Text="{Eval $self.Tag}" />
                 <TextBlock Text="{Eval $parent.Tag}" />
-                <TextBlock Text="{Eval '$parent[StackPanelEx].Tag'}" />
-                <TextBlock Text="{Eval '$parent[StackPanelEx;1].Tag'}" />
-                <TextBlock Text="{Eval '$parent[StackPanelEx;2].Tag'}" />
-                <TextBlock Text="{Eval '$parent[1].Tag'}" />
-                <TextBlock Text="{Eval '$parent[2].Tag'}" />
-                <TextBlock Text="{Eval '$parent[3].Tag'}" />
+                <TextBlock Text="{Eval $parent[StackPanelEx].Tag}" />
+                <TextBlock Text="{Eval '$parent[StackPanelEx,1].Tag'}" />
+                <TextBlock Text="{Eval '$parent[StackPanelEx,2].Tag'}" />
+                <TextBlock Text="{Eval $parent[1].Tag}" />
+                <TextBlock Text="{Eval $parent[2].Tag}" />
+                <TextBlock Text="{Eval $parent[3].Tag}" />
                 <TextBlock Text="{Eval @ResOnParent}" />
                 <TextBlock Text="{Eval @ResOnWindow}" />
                 <TextBlock Text="{Eval 'ScriptEvaluate(#ExpressionTextBox.Text).ToString()', FallbackValue='Evaluation failed'}" />
