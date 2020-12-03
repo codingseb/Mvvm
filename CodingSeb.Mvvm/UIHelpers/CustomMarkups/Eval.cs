@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
+using System.Linq;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Markup;
@@ -123,8 +124,9 @@ namespace CodingSeb.Mvvm.UIHelpers
         {
             private int evaluationCounter;
             public ExpressionEvaluator.ExpressionEvaluator Evaluator { get; set; }
-            public List<INotifyPropertyChanged> NotifyProperyChangedList { get; } = new List<INotifyPropertyChanged>();
-            public List<DependencyPropertyListener> DependencyPropertyListeners { get; } = new List<DependencyPropertyListener>();
+            private List<INotifyPropertyChanged> NotifyProperyChangedList { get; } = new List<INotifyPropertyChanged>();
+            private Dictionary<INotifyPropertyChanged, List<string>> PropertiesToBindDict { get; } = new Dictionary<INotifyPropertyChanged, List<string>>();
+            private List<DependencyPropertyListener> DependencyPropertyListeners { get; } = new List<DependencyPropertyListener>();
 
             public string Evaluate { get; set; }
             public object DataContext { get; set; }
@@ -150,9 +152,9 @@ namespace CodingSeb.Mvvm.UIHelpers
             {
                 if(ResetAutoBindings)
                 {
-                    NotifyProperyChangedList.ForEach(notifyPropertyChanged => notifyPropertyChanged.PropertyChanged -= NotifyPropertyChanged_PropertyChanged);
+                    PropertiesToBindDict.Keys.ToList().ForEach(notifyPropertyChanged => notifyPropertyChanged.PropertyChanged -= NotifyPropertyChanged_PropertyChanged);
                     DependencyPropertyListeners.ForEach(listener => listener.Dispose());
-                    NotifyProperyChangedList.Clear();
+                    PropertiesToBindDict.Clear();
                     DependencyPropertyListeners.Clear();
                 }
 
@@ -183,7 +185,10 @@ namespace CodingSeb.Mvvm.UIHelpers
                     if (args.This is INotifyPropertyChanged notifyPropertyChanged)
                     {
                         notifyPropertyChanged.PropertyChanged += NotifyPropertyChanged_PropertyChanged;
-                        NotifyProperyChangedList.Add(notifyPropertyChanged);
+                        if (!PropertiesToBindDict.ContainsKey(notifyPropertyChanged))
+                            PropertiesToBindDict[notifyPropertyChanged] = new List<string>();
+
+                        PropertiesToBindDict[notifyPropertyChanged].Add(args.Name);
                     }
                     else if(args.This is DependencyObject dependencyObject)
                     {
@@ -202,8 +207,11 @@ namespace CodingSeb.Mvvm.UIHelpers
 
             private void NotifyPropertyChanged_PropertyChanged(object sender, PropertyChangedEventArgs e)
             {
-                BindingOperations.GetBindingExpression(TargetObject, TargetProperty)?.UpdateTarget();
-                BindingOperations.GetMultiBindingExpression(TargetObject, TargetProperty)?.UpdateTarget();
+                if (sender is INotifyPropertyChanged notifyPropertyChanged && PropertiesToBindDict.ContainsKey(notifyPropertyChanged) && PropertiesToBindDict[notifyPropertyChanged].Contains(e.PropertyName))
+                {
+                    BindingOperations.GetBindingExpression(TargetObject, TargetProperty)?.UpdateTarget();
+                    BindingOperations.GetMultiBindingExpression(TargetObject, TargetProperty)?.UpdateTarget();
+                }
             }
         }
     }
