@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Windows;
@@ -36,10 +37,10 @@ namespace CodingSeb.Mvvm.UIHelpers
         public object FallbackValue { get; set; }
 
         /// <summary>
-        /// Si mis à <c>true</c> on récupère le résultat mais on ne rend pas l'Eval dynamic en créant des Binding sur les éléments qui les supportent.
-        /// Par défaut : <c>false</c>
+        /// To specify the way evaluation auto create bindings to update the result on changes of used dependencyProperties and INotifyPropertyChanged
+        /// Default : <c>AutoBindingAtFirstEvaluation</c>
         /// </summary>
-        public bool DoNotAutoBinding { get; set; }
+        public EvalAutoBinding AutoBinding { get; set; }
 
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
@@ -70,6 +71,9 @@ namespace CodingSeb.Mvvm.UIHelpers
                 Evaluate = Evaluate,
                 DataContext = dataContext,
                 FallbackValue = FallbackValue,
+                TargetObject = targetObject,
+                TargetProperty = targetProperty,
+                ResetAutoBindings = AutoBinding == EvalAutoBinding.AutoBindingAtEachEvaluation
             };
 
             MultiBinding multiBinding = new MultiBinding()
@@ -77,24 +81,9 @@ namespace CodingSeb.Mvvm.UIHelpers
                 Converter = internalConverter
             };
 
-            void PreEvaluateVariables(object sender, ExpressionEvaluator.VariablePreEvaluationEventArg args)
+            if (AutoBinding != EvalAutoBinding.DoNotAutoBinding)
             {
-                if (args.This != targetObject || !args.Name.Equals(targetProperty.Name))
-                {
-                    if (args.This is INotifyPropertyChanged || args.This is DependencyObject)
-                    {
-                        multiBinding.Bindings.Add(new Binding(args.Name)
-                        {
-                            Source = args.This,
-                            Mode = BindingMode.OneWay
-                        });
-                    }
-                }
-            }
-
-            if (!DoNotAutoBinding)
-            {
-                evaluator.PreEvaluateVariable += PreEvaluateVariables;
+                evaluator.PreEvaluateVariable += internalConverter.PreEvaluateVariables;
             }
 
             try
@@ -107,10 +96,18 @@ namespace CodingSeb.Mvvm.UIHelpers
                     internalConverter.LastValue = FallbackValue;
             }
 
-            evaluator.PreEvaluateVariable -= PreEvaluateVariables;
-
-            if (multiBinding.Bindings.Count > 0)
+            if(AutoBinding == EvalAutoBinding.AutoBindingAtFirstEvaluation)
             {
+                evaluator.PreEvaluateVariable -= internalConverter.PreEvaluateVariables;
+            }
+
+            if (AutoBinding != EvalAutoBinding.DoNotAutoBinding)
+            {
+                multiBinding.Bindings.Add(new Binding(nameof(EvalInternalConverter.EvaluationCounter))
+                {
+                    Source = internalConverter
+                });
+
                 if (hierarchyBuilding)
                     return multiBinding;
 
@@ -122,22 +119,48 @@ namespace CodingSeb.Mvvm.UIHelpers
             return internalConverter.LastValue;
         }
 
-        protected class EvalInternalConverter : IMultiValueConverter
+        protected class EvalInternalConverter : IMultiValueConverter, INotifyPropertyChanged
         {
+            private int evaluationCounter;
             public ExpressionEvaluator.ExpressionEvaluator Evaluator { get; set; }
+            public List<INotifyPropertyChanged> NotifyProperyChangedList { get; } = new List<INotifyPropertyChanged>();
+            public List<DependencyPropertyListener> DependencyPropertyListeners { get; } = new List<DependencyPropertyListener>();
 
             public string Evaluate { get; set; }
             public object DataContext { get; set; }
             public object LastValue { get; set; }
             public object FallbackValue { get; set; }
+            public bool ResetAutoBindings { get; set; }
+            public DependencyObject TargetObject { get; set; }
+            public DependencyProperty TargetProperty { get; set; }
+
+            public int EvaluationCounter
+            {
+                get { return evaluationCounter; }
+                set
+                {
+                    evaluationCounter = value;
+                    PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(EvaluationCounter)));
+                }
+            }
+
+            public event PropertyChangedEventHandler PropertyChanged;
 
             public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
             {
+                if(ResetAutoBindings)
+                {
+                    NotifyProperyChangedList.ForEach(notifyPropertyChanged => notifyPropertyChanged.PropertyChanged -= NotifyPropertyChanged_PropertyChanged);
+                    DependencyPropertyListeners.ForEach(listener => listener.Dispose());
+                    NotifyProperyChangedList.Clear();
+                    DependencyPropertyListeners.Clear();
+                }
+
                 try
                 {
                     LastValue = Evaluator.ScriptEvaluate(Evaluate);
                 }
-                catch(Exception e)
+                catch
                 {
                     if(FallbackValue != null)
                     {
@@ -151,6 +174,36 @@ namespace CodingSeb.Mvvm.UIHelpers
             public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
             {
                 throw new NotImplementedException();
+            }
+
+            internal void PreEvaluateVariables(object sender, ExpressionEvaluator.VariablePreEvaluationEventArg args)
+            {
+                if (args.This != TargetObject || !args.Name.Equals(TargetProperty.Name))
+                {
+                    if (args.This is INotifyPropertyChanged notifyPropertyChanged)
+                    {
+                        notifyPropertyChanged.PropertyChanged += NotifyPropertyChanged_PropertyChanged;
+                        NotifyProperyChangedList.Add(notifyPropertyChanged);
+                    }
+                    else if(args.This is DependencyObject dependencyObject)
+                    {
+                        var dependencyPropertyListener = new DependencyPropertyListener(dependencyObject, new PropertyPath(args.Name));
+                        dependencyPropertyListener.Changed += DependencyPropertyListener_Changed;
+                        DependencyPropertyListeners.Add(dependencyPropertyListener);
+                    }
+                }
+            }
+
+            private void DependencyPropertyListener_Changed(object sender, DependencyPropertyChangedEventArgs e)
+            {
+                BindingOperations.GetBindingExpression(TargetObject, TargetProperty)?.UpdateTarget();
+                BindingOperations.GetMultiBindingExpression(TargetObject, TargetProperty)?.UpdateTarget();
+            }
+
+            private void NotifyPropertyChanged_PropertyChanged(object sender, PropertyChangedEventArgs e)
+            {
+                BindingOperations.GetBindingExpression(TargetObject, TargetProperty)?.UpdateTarget();
+                BindingOperations.GetMultiBindingExpression(TargetObject, TargetProperty)?.UpdateTarget();
             }
         }
     }

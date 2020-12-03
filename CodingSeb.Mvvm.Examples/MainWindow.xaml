@@ -52,7 +52,7 @@
         <TextBlock Text="{Eval '(Value1 + Value2).ToString()'}" />
         <TextBlock Text="{Eval '((double)(#TextBox1.Text) + Value2).ToString()'}" />
         <TextBlock Text="{Eval '((double)(#TextBox1.Text) + Value2).ToString()', FallbackValue='Failed'}" />
-        <TextBlock Text="{Eval 'ScriptEvaluate(#ExpressionTextBox.Text).ToString()', FallbackValue='Evaluation failed'}" />
+        <TextBlock Text="{Eval 'ScriptEvaluate(#ExpressionTextBox.Text).ToString()', FallbackValue='Evaluation failed', AutoBinding=AutoBindingAtEachEvaluation}" />
         <Grid Tag="InterGrid">
             <StackPanelEx Tag="Parent" Orientation="Horizontal" MarginBetweenChildren="10" >
                 <StackPanelEx.Resources>
@@ -68,7 +68,7 @@
                 <TextBlock Text="{Eval $parent[3].Tag}" />
                 <TextBlock Text="{Eval @ResOnParent}" />
                 <TextBlock Text="{Eval @ResOnWindow}" />
-                <TextBlock Text="{Eval 'ScriptEvaluate(#ExpressionTextBox.Text).ToString()', FallbackValue='Evaluation failed'}" />
+                <TextBlock Text="{Eval 'ScriptEvaluate(#ExpressionTextBox.Text).ToString()', FallbackValue='Evaluation failed', AutoBinding=AutoBindingAtEachEvaluation}" />
             </StackPanelEx>
         </Grid>
         <StackPanelEx Orientation="Horizontal" MarginBetweenChildren="10" >

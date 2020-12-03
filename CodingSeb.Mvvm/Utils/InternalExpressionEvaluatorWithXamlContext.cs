@@ -33,6 +33,9 @@ namespace CodingSeb.Mvvm
 
         protected override void Init()
         {
+            Namespaces.Add("System.Windows");
+            Namespaces.Add("System.Windows.Controls");
+            Namespaces.Add("System.Windows.Media");
             Namespaces.Add("System.Diagnostics");
             StaticTypesForExtensionsMethods.Add(typeof(LogicalAndVisualTreeExtensions));
             ParsingMethods.Insert(0, EvaluateBindingVariables);
