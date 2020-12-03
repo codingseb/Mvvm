@@ -11,11 +11,10 @@ namespace CodingSeb.Mvvm
     internal class InternalExpressionEvaluatorWithXamlContext : ExpressionEvaluator.ExpressionEvaluator
     {
         private static readonly Regex elementNameRegex =
-            new Regex(@"^((\#(?<ElementName>[\p{L}_][\p{L}_0-9]*))|([@](?<ResourceKey>[\p{L}_][\p{L}_0-9]*))|(?<Self>\$self)|(?<Parent>\$parent(\[\s*((?<AncestorLevel>\d+)|(?<AncestorType>[^,\] \t]+)(\s*,\s*(?<AncestorLevel>\d+))?)\s*\])?))");
+            new Regex(@"^((\#(?<ElementName>[\p{L}_][\p{L}_0-9]*))|([@](?<ResourceKey>[\p{L}_][\p{L}_0-9]*))|(?<Self>\$self)|(?<Parent>\$parent(?![\p{L}_0-9])(?<Parameters>\[)?))");
 
         public DependencyObject TargetObject { get; set; }
 
-        public Dictionary<string, object> BindingsSourcesDict = new Dictionary<string, object>();
         protected Dictionary<string, Type> XamlTypesDict { get; } = new Dictionary<string, Type>();
 
         public InternalExpressionEvaluatorWithXamlContext(object contextObject) : base(contextObject) { }
@@ -30,6 +29,16 @@ namespace CodingSeb.Mvvm
             xamlSchemaContext?.GetAllXamlNamespaces().ToList().ForEach(ns =>
                 xamlSchemaContext?.GetAllXamlTypes(ns).Where(t => typeof(DependencyObject).IsAssignableFrom(t.UnderlyingType)).ToList()
                     .ForEach(xamlType => XamlTypesDict[xamlType.Name] = xamlType.UnderlyingType));
+
+            EvaluateVariable += InternalExpressionEvaluatorWithXamlContext_EvaluateVariable;
+        }
+
+        private void InternalExpressionEvaluatorWithXamlContext_EvaluateVariable(object sender, ExpressionEvaluator.VariableEvaluationEventArg e)
+        {
+            if(e.This == null && XamlTypesDict.ContainsKey(e.Name))
+            {
+                e.Value = new ExpressionEvaluator.ClassOrEnumType() { Type = XamlTypesDict[e.Name] };
+            }
         }
 
         protected override void Init()
@@ -48,55 +57,57 @@ namespace CodingSeb.Mvvm
 
             if (match.Success)
             {
-                string name = match.Value;
+                if (match.Groups["Parent"].Success)
+                {
+                    if(match.Groups["Parameters"].Success)
+                    {
+                        i += match.Length;
 
-                if (!BindingsSourcesDict.ContainsKey(name))
+                        List<object> parameters = GetExpressionsBetweenParenthesesOrOtherImbricableBrackets(expression, ref i, true, ",", "[", "]")
+                            .ConvertAll(Evaluate);
+
+                        Type type = (parameters[0] as ExpressionEvaluator.ClassOrEnumType)?.Type ?? parameters[0] as Type ?? typeof(DependencyObject);
+                        int level = 1;
+
+                        if(parameters[0] is int)
+                        {
+                            level = (int)parameters[0];
+                        }
+                        else if(parameters.Count > 1 && parameters[1] is int)
+                        {
+                            level = (int)parameters[1];
+                        }
+
+                        stack.Push(TargetObject.FindVisualParent(type, level));
+                    }
+                    else
+                    {
+                        stack.Push(VisualTreeHelper.GetParent(TargetObject));
+                        i += match.Length - 1;
+                    }
+                }
+                else
                 {
                     if (match.Groups["ElementName"].Success)
                     {
-                        BindingsSourcesDict[name] = (TargetObject as FrameworkElement ?? TargetObject.FindLogicalParent<FrameworkElement>()).FindName(match.Groups["ElementName"].Value);
+                        object elementNameObject = (TargetObject as FrameworkElement ?? TargetObject.FindLogicalParent<FrameworkElement>()).FindName(match.Groups["ElementName"].Value);
+
+                        if (elementNameObject != null)
+                            stack.Push(elementNameObject);
+                        else
+                            return false;
                     }
                     else if (match.Groups["Self"].Success)
                     {
-                        BindingsSourcesDict[name] = TargetObject;
+                        stack.Push(TargetObject);
                     }
                     else if (match.Groups["ResourceKey"].Success)
                     {
-                        BindingsSourcesDict[name] = TargetObject.FindNearestResource(match.Groups["ResourceKey"].Value);
+                        stack.Push(TargetObject.FindNearestResource(match.Groups["ResourceKey"].Value));
                     }
-                    else if (match.Groups["Parent"].Success)
-                    {
-                        if (match.Groups["AncestorType"].Success)
-                        {
-                            Type type;
 
-                            if (XamlTypesDict.ContainsKey(match.Groups["AncestorType"].Value))
-                            {
-                                type = XamlTypesDict[match.Groups["AncestorType"].Value];
-                            }
-                            else
-                            {
-                                object typeResult = Evaluate(match.Groups["AncestorType"].Value);
-                                type = (typeResult as ExpressionEvaluator.ClassOrEnumType)?.Type ?? typeResult as Type ?? typeof(DependencyObject);
-                            }
-
-                            BindingsSourcesDict[name] = TargetObject
-                                    .FindVisualParent(type, match.Groups["AncestorLevel"].Success ? int.Parse(match.Groups["AncestorLevel"].Value) : 1);
-                        }
-                        else if (match.Groups["AncestorLevel"].Success)
-                        {
-                            BindingsSourcesDict[name] = TargetObject.FindVisualParent(typeof(DependencyObject), int.Parse(match.Groups["AncestorLevel"].Value));
-                        }
-                        else
-                        {
-                            BindingsSourcesDict[name] = VisualTreeHelper.GetParent(TargetObject);
-                        }
-                    }
+                    i += match.Length - 1;
                 }
-
-                stack.Push(BindingsSourcesDict[name]);
-
-                i += match.Length - 1;
 
                 return true;
             }
