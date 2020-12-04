@@ -81,6 +81,10 @@ namespace CodingSeb.Mvvm.UIHelpers
                         }
                         catch when (CatchEvaluationExceptions)
                         {}
+                        finally
+                        {
+                            Evaluator.Variables.Clear();
+                        }
                     }
                 }
             }

@@ -175,7 +175,8 @@ namespace CodingSeb.Mvvm.UIHelpers
             {
                 if(ResetAutoBindings)
                 {
-                    PropertiesToBindDict.Keys.ToList().ForEach(notifyPropertyChanged => notifyPropertyChanged.PropertyChanged -= NotifyPropertyChanged_PropertyChanged);
+                    PropertiesToBindDict.Keys.ToList()
+                        .ForEach(notifyPropertyChanged => WeakEventManager<INotifyPropertyChanged, PropertyChangedEventArgs>.RemoveHandler(notifyPropertyChanged, nameof(INotifyPropertyChanged.PropertyChanged), NotifyPropertyChanged_PropertyChanged));
                     DependencyPropertyListeners.ForEach(listener => listener.Dispose());
                     PropertiesToBindDict.Clear();
                     DependencyPropertyListeners.Clear();
@@ -215,7 +216,7 @@ namespace CodingSeb.Mvvm.UIHelpers
                 {
                     if (args.This is INotifyPropertyChanged notifyPropertyChanged)
                     {
-                        notifyPropertyChanged.PropertyChanged += NotifyPropertyChanged_PropertyChanged;
+                        WeakEventManager<INotifyPropertyChanged, PropertyChangedEventArgs>.AddHandler(notifyPropertyChanged, nameof(INotifyPropertyChanged.PropertyChanged), NotifyPropertyChanged_PropertyChanged);
                         if (!PropertiesToBindDict.ContainsKey(notifyPropertyChanged))
                             PropertiesToBindDict[notifyPropertyChanged] = new List<string>();
 
