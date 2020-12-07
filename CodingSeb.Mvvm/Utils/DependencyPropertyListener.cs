@@ -24,14 +24,12 @@ namespace CodingSeb.Mvvm
                 Path = property,
                 Mode = BindingMode.OneWay,
             };
-            BindingExpression = (BindingExpression)BindingOperations.SetBinding(this, ProxyProperty, Binding);
+            BindingOperations.SetBinding(this, ProxyProperty, Binding);
         }
 
         public event EventHandler<DependencyPropertyChangedEventArgs> Changed;
 
-        public BindingExpression BindingExpression { get; }
-
-        public Binding Binding { get; }
+        private Binding Binding { get; }
 
         public DependencyObject Source => (DependencyObject)Binding.Source;
 
