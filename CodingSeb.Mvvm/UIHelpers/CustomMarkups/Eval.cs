@@ -157,7 +157,7 @@ namespace CodingSeb.Mvvm.UIHelpers
         protected class EvalInternalConverter : IMultiValueConverter
         {
             public ExpressionEvaluator.ExpressionEvaluator Evaluator { get; set; }
-            private Dictionary<INotifyPropertyChanged, List<string>> PropertiesToBindDict { get; } = new Dictionary<INotifyPropertyChanged, List<string>>();
+            private WeakDictionary<INotifyPropertyChanged, List<string>> PropertiesToBindDict { get; } = new WeakDictionary<INotifyPropertyChanged, List<string>>();
             private List<DependencyPropertyListener> DependencyPropertyListeners { get; } = new List<DependencyPropertyListener>();
 
             public bool IsInHierarchy { get; set; }
