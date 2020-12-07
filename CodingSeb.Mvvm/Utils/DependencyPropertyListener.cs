@@ -44,7 +44,7 @@ namespace CodingSeb.Mvvm
             BindingOperations.ClearBinding(this, ProxyProperty);
             Changed = null;
         }
-
+         
         private static void OnSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var listener = (DependencyPropertyListener)d;

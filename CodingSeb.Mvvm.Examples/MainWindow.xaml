@@ -40,16 +40,21 @@
             <Label Content="XCommandExpression" />
             <TextBox x:Name="XCommandExpressionTextBox" 
                      Text="MessageBox.Show(&quot;Hello&quot;)"/>
-            <Button Content="Click to Expression" Click="{XCommand ScriptEvaluate(#XCommandExpressionTextBox.Text), CatchEvaluationExceptions=True}"
+            <Button Content="Click to Expression" Click="{XCommand 'ScriptEvaluate(#XCommandExpressionTextBox.Text)', CatchEvaluationExceptions=True}"
                     VerticalAlignment="Center"/>
-            <Button Content="Command to Expression" Command="{XCommand ScriptEvaluate(#XCommandExpressionTextBox.Text)}"
+            <Button Content="Command to Expression" Command="{XCommand 'ScriptEvaluate(#XCommandExpressionTextBox.Text)'}"
                     VerticalAlignment="Center"/>
             <Label Content="ExpressionTextBox" />
             <TextBox x:Name="ExpressionTextBox" 
                      Text="$parent[StackPanelEx]"
                      Grid.ColumnSpan="3"/>
         </AutoGrid>
-        <TextBlock Text="{Eval '(Value1 + Value2).ToString()'}" />
+        <DockPanel>
+            <Button Content="Xcommand on Method with args"
+                    DockPanel.Dock="Right"
+                    Click="{XCommand ClickTest, CommandParameter=1}" />
+            <TextBlock Text="{Eval '(Value1 + Value2).ToString()'}" />
+        </DockPanel>
         <TextBlock Text="{Eval '((double)(#TextBox1.Text) + Value2).ToString()'}" />
         <TextBlock Text="{Eval '((double)(#TextBox1.Text) + Value2).ToString()', FallbackValue='Failed'}" />
         <TextBlock Text="{Eval 'ScriptEvaluate(#ExpressionTextBox.Text).ToString()', FallbackValue='Evaluation failed', AutoBinding=AutoBindingAtEachEvaluation}" />

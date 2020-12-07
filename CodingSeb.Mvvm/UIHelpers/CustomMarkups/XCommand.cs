@@ -18,7 +18,7 @@ namespace CodingSeb.Mvvm.UIHelpers
         /// <summary>
         /// if true pass andEventToCommandArgs object with commandparameter event sender and event args, if false just CommandParameter
         /// </summary>
-        public bool UseEventToCommandArgs { get; set; } = true;
+        public bool UseEventToCommandArgs { get; set; }
 
         public object CommandParameter { get; set; }
 
@@ -67,7 +67,43 @@ namespace CodingSeb.Mvvm.UIHelpers
                         .Where(methodInfo => methodInfo.Name.Equals(CommandOrMethodOrEvaluation))
                         .ToArray() is MethodInfo[] methodInfos && methodInfos.Length > 0)
                     {
-                        methodInfos[0].Invoke(viewmodel, new object[0]);
+                        methodInfos.ToList().ForEach(methodInfo =>
+                        {
+                            ParameterInfo[] parametersInfos = methodInfo.GetParameters();
+                            if (parametersInfos.Length == 0)
+                            {
+                                methodInfo.Invoke(viewmodel, new object[0]);
+                            }
+                            else if (parametersInfos.Length == 1
+                                && (parametersInfos[0].ParameterType == typeof(XCommandArgs) || UseEventToCommandArgs))
+                            {
+                                methodInfo.Invoke(viewmodel, new object[] {
+                                    new XCommandArgs()
+                                    {
+                                        Sender = sender,
+                                        EventArgs = args,
+                                        CommandParameter = CommandParameter
+                                    }});
+                            }
+                            else if (parametersInfos.Length == 1
+                                && (parametersInfos[0].ParameterType == sender.GetType() || parametersInfos[0].ParameterType.IsAssignableFrom(sender.GetType())))
+                            {
+                                methodInfo.Invoke(viewmodel, new object[] { CommandParameter });
+                            }
+                            else if(parametersInfos.Length == 2
+                                && (parametersInfos[0].ParameterType == sender.GetType() || parametersInfos[0].ParameterType.IsAssignableFrom(sender.GetType()))
+                                && (parametersInfos[1].ParameterType == args.GetType() || parametersInfos[1].ParameterType.IsAssignableFrom(args.GetType())))
+                            {
+                                methodInfo.Invoke(viewmodel, new object[] { sender, args});
+                            }
+                            else if(parametersInfos.Length == 3
+                                && (parametersInfos[0].ParameterType == sender.GetType() || parametersInfos[0].ParameterType.IsAssignableFrom(sender.GetType()))
+                                && (parametersInfos[1].ParameterType == args.GetType() || parametersInfos[1].ParameterType.IsAssignableFrom(args.GetType()))
+                                && (CommandParameter == null || parametersInfos[2].ParameterType == CommandParameter.GetType() || parametersInfos[2].ParameterType.IsAssignableFrom(CommandParameter.GetType())))
+                            {
+                                methodInfo.Invoke(viewmodel, new object[] { sender, args, CommandParameter});
+                            }
+                        });
                     }
                     else
                     {
