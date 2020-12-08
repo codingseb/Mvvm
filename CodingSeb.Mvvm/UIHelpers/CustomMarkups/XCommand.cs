@@ -24,7 +24,7 @@ namespace CodingSeb.Mvvm.UIHelpers
         private DependencyPropertyListener commandParameterListener;
 
         public object CommandParameter { get; set; }
-        public MarkupExtension CommandParameterBinding { get; set; }
+        public BindingBase CommandParameterBinding { get; set; }
 
         public bool CatchEvaluationExceptions { get; set; }
 
@@ -154,30 +154,9 @@ namespace CodingSeb.Mvvm.UIHelpers
                     OptionScriptNeedSemicolonAtTheEndOfLastExpression = false
                 };
 
-                if(CommandParameterBinding is BindingBase commandParameterBinding)
+                if(CommandParameterBinding != null)
                 {
-                    commandParameterListener = new DependencyPropertyListener(commandParameterBinding, targetObject);
-                }
-                else if(CommandParameterBinding != null)
-                {
-                    if(CommandParameterBinding.GetType().GetMethod("ProvideValue", new Type[] { typeof(IServiceProvider), typeof(bool) }) is MethodInfo methodInfo)
-                    {
-                        object value = methodInfo.Invoke(CommandParameterBinding, new object[] { serviceProvider, true });
-
-                        if (value is BindingBase bindingBase)
-                            commandParameterListener = new DependencyPropertyListener(bindingBase, targetObject);
-                        else
-                            CommandParameter = value;
-                    }
-                    else
-                    {
-                        object value = CommandParameterBinding.ProvideValue(serviceProvider);
-
-                        if (value is BindingBase bindingBase)
-                            commandParameterListener = new DependencyPropertyListener(bindingBase, targetObject);
-                        else
-                            CommandParameter = value;
-                    }
+                    commandParameterListener = new DependencyPropertyListener(CommandParameterBinding, targetObject);
                 }
 
                 if (service.TargetProperty is EventInfo eventInfo)
