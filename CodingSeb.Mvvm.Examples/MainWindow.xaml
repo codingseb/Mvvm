@@ -50,9 +50,9 @@
                      Grid.ColumnSpan="3"/>
         </AutoGrid>
         <DockPanel>
-            <Button Content="Xcommand on Method with args"
+            <Button Content="XCommand on Method with args"
                     DockPanel.Dock="Right"
-                    Click="{XCommand ClickTest, CommandParameter=1}" />
+                    Click="{XCommand ClickTest, CommandParameterBinding={Eval #TextBox1.Text}}" />
             <TextBlock Text="{Eval '(Value1 + Value2).ToString()'}" />
         </DockPanel>
         <TextBlock Text="{Eval '((double)(#TextBox1.Text) + Value2).ToString()'}" />

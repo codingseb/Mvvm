@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Markup;
 
@@ -20,7 +21,10 @@ namespace CodingSeb.Mvvm.UIHelpers
         /// </summary>
         public bool UseEventToCommandArgs { get; set; }
 
+        private DependencyPropertyListener commandParameterListener;
+
         public object CommandParameter { get; set; }
+        public MarkupExtension CommandParameterBinding { get; set; }
 
         public bool CatchEvaluationExceptions { get; set; }
 
@@ -45,6 +49,8 @@ namespace CodingSeb.Mvvm.UIHelpers
                 {
                     Type viewModelType = viewmodel.GetType();
 
+                    object parameter = commandParameterListener?.Value ?? CommandParameter;
+
                     if (viewModelType.GetProperty(CommandOrMethodOrEvaluation)?.GetValue(viewmodel) is ICommand command)
                     {
                         object objArg = UseEventToCommandArgs ?
@@ -52,9 +58,9 @@ namespace CodingSeb.Mvvm.UIHelpers
                         {
                             Sender = sender,
                             EventArgs = args,
-                            CommandParameter = CommandParameter
+                            CommandParameter = parameter
                         } :
-                        CommandParameter;
+                        parameter;
 
                         // Execute Command and pass event arguments as parameter
                         if (command.CanExecute(objArg))
@@ -82,13 +88,13 @@ namespace CodingSeb.Mvvm.UIHelpers
                                     {
                                         Sender = sender,
                                         EventArgs = args,
-                                        CommandParameter = CommandParameter
+                                        CommandParameter = parameter
                                     }});
                             }
                             else if (parametersInfos.Length == 1
                                 && (parametersInfos[0].ParameterType == sender.GetType() || parametersInfos[0].ParameterType.IsAssignableFrom(sender.GetType())))
                             {
-                                methodInfo.Invoke(viewmodel, new object[] { CommandParameter });
+                                methodInfo.Invoke(viewmodel, new object[] { parameter });
                             }
                             else if(parametersInfos.Length == 2
                                 && (parametersInfos[0].ParameterType == sender.GetType() || parametersInfos[0].ParameterType.IsAssignableFrom(sender.GetType()))
@@ -99,9 +105,9 @@ namespace CodingSeb.Mvvm.UIHelpers
                             else if(parametersInfos.Length == 3
                                 && (parametersInfos[0].ParameterType == sender.GetType() || parametersInfos[0].ParameterType.IsAssignableFrom(sender.GetType()))
                                 && (parametersInfos[1].ParameterType == args.GetType() || parametersInfos[1].ParameterType.IsAssignableFrom(args.GetType()))
-                                && (CommandParameter == null || parametersInfos[2].ParameterType == CommandParameter.GetType() || parametersInfos[2].ParameterType.IsAssignableFrom(CommandParameter.GetType())))
+                                && (parameter == null || parametersInfos[2].ParameterType == parameter.GetType() || parametersInfos[2].ParameterType.IsAssignableFrom(parameter.GetType())))
                             {
-                                methodInfo.Invoke(viewmodel, new object[] { sender, args, CommandParameter});
+                                methodInfo.Invoke(viewmodel, new object[] { sender, args, parameter });
                             }
                         });
                     }
@@ -111,7 +117,7 @@ namespace CodingSeb.Mvvm.UIHelpers
                         {
                             Evaluator.Variables["Sender"] = sender;
                             Evaluator.Variables["EventArgs"] = args;
-                            Evaluator.Variables["CommandParameter"] = CommandParameter;
+                            Evaluator.Variables["CommandParameter"] = parameter;
 
                             Evaluator.ScriptEvaluate(CommandOrMethodOrEvaluation);
                         }
@@ -147,6 +153,32 @@ namespace CodingSeb.Mvvm.UIHelpers
                     TargetObject = targetObject,
                     OptionScriptNeedSemicolonAtTheEndOfLastExpression = false
                 };
+
+                if(CommandParameterBinding is BindingBase commandParameterBinding)
+                {
+                    commandParameterListener = new DependencyPropertyListener(commandParameterBinding, targetObject);
+                }
+                else if(CommandParameterBinding != null)
+                {
+                    if(CommandParameterBinding.GetType().GetMethod("ProvideValue", new Type[] { typeof(IServiceProvider), typeof(bool) }) is MethodInfo methodInfo)
+                    {
+                        object value = methodInfo.Invoke(CommandParameterBinding, new object[] { serviceProvider, true });
+
+                        if (value is BindingBase bindingBase)
+                            commandParameterListener = new DependencyPropertyListener(bindingBase, targetObject);
+                        else
+                            CommandParameter = value;
+                    }
+                    else
+                    {
+                        object value = CommandParameterBinding.ProvideValue(serviceProvider);
+
+                        if (value is BindingBase bindingBase)
+                            commandParameterListener = new DependencyPropertyListener(bindingBase, targetObject);
+                        else
+                            CommandParameter = value;
+                    }
+                }
 
                 if (service.TargetProperty is EventInfo eventInfo)
                 {
