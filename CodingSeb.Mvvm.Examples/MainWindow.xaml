@@ -35,7 +35,7 @@
             <TextBox Text="{Binding Value2, UpdateSourceTrigger=PropertyChanged}" />
             <Button Content="Increment (Command to command)" Command="{XCommand IncrementValue2Command}"
                         VerticalAlignment="Center"/>
-            <Button Content="Decrement (Command to method)" Command="{XCommand DecrementValue2}"
+            <Button Content="Decrement (Command to method)" Command="{XCommand DecrementValue2, TestCanExecute}"
                         VerticalAlignment="Center"/>
             <Label Content="XCommandExpression" />
             <TextBox x:Name="XCommandExpressionTextBox" 

@@ -1,6 +1,6 @@
 ﻿namespace System.Windows.Input
 {
-    public class RelayCommand<T> : ICommand
+    public class RelayCommand<T> : IRelayCommand
     {
         private EventHandler internalCanExecuteChanged;
         private bool autoCanExecuteRequery;

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Windows;
@@ -13,8 +15,14 @@ namespace CodingSeb.Mvvm.UIHelpers
     /// </summary>
     public class XCommand : MarkupExtension
     {
+        private WeakDictionary<INotifyPropertyChanged, List<string>> PropertiesToBindDict { get; } = new WeakDictionary<INotifyPropertyChanged, List<string>>();
+        private WeakReference<IRelayCommand> relayCommandReference;
+
         [ConstructorArgument("commandOrMethodOrEvaluation")]
         public string CommandOrMethodOrEvaluation { get; set; }
+
+        [ConstructorArgument("canExecuteForMethodOrEvaluation")]
+        public string CanExecuteForMethodOrEvaluation { get; set; }
 
         /// <summary>
         /// if true pass andEventToCommandArgs object with commandparameter event sender and event args, if false just CommandParameter
@@ -35,8 +43,14 @@ namespace CodingSeb.Mvvm.UIHelpers
             CommandOrMethodOrEvaluation = commandOrMethodOrEvaluation;
         }
 
+        public XCommand(string commandOrMethodOrEvaluation, string canExecuteForMethodOrEvaluation)
+        {
+            CommandOrMethodOrEvaluation = commandOrMethodOrEvaluation;
+            CanExecuteForMethodOrEvaluation = canExecuteForMethodOrEvaluation;
+        }
+
         public XCommand()
-        {}
+        { }
 
         private void InvokeCommand(object sender, EventArgs args)
         {
@@ -68,7 +82,7 @@ namespace CodingSeb.Mvvm.UIHelpers
                             command.Execute(objArg);
                         }
                     }
-                    else if(viewModelType
+                    else if (viewModelType
                         .GetMethods()
                         .Where(methodInfo => methodInfo.Name.Equals(CommandOrMethodOrEvaluation))
                         .ToArray() is MethodInfo[] methodInfos && methodInfos.Length > 0)
@@ -96,13 +110,13 @@ namespace CodingSeb.Mvvm.UIHelpers
                             {
                                 methodInfo.Invoke(viewmodel, new object[] { parameter });
                             }
-                            else if(parametersInfos.Length == 2
+                            else if (parametersInfos.Length == 2
                                 && (parametersInfos[0].ParameterType == sender.GetType() || parametersInfos[0].ParameterType.IsAssignableFrom(sender.GetType()))
                                 && (parametersInfos[1].ParameterType == args.GetType() || parametersInfos[1].ParameterType.IsAssignableFrom(args.GetType())))
                             {
-                                methodInfo.Invoke(viewmodel, new object[] { sender, args});
+                                methodInfo.Invoke(viewmodel, new object[] { sender, args });
                             }
-                            else if(parametersInfos.Length == 3
+                            else if (parametersInfos.Length == 3
                                 && (parametersInfos[0].ParameterType == sender.GetType() || parametersInfos[0].ParameterType.IsAssignableFrom(sender.GetType()))
                                 && (parametersInfos[1].ParameterType == args.GetType() || parametersInfos[1].ParameterType.IsAssignableFrom(args.GetType()))
                                 && (parameter == null || parametersInfos[2].ParameterType == parameter.GetType() || parametersInfos[2].ParameterType.IsAssignableFrom(parameter.GetType())))
@@ -122,13 +136,65 @@ namespace CodingSeb.Mvvm.UIHelpers
                             Evaluator.ScriptEvaluate(CommandOrMethodOrEvaluation);
                         }
                         catch when (CatchEvaluationExceptions)
-                        {}
+                        { }
                         finally
                         {
                             Evaluator.Variables.Clear();
                         }
                     }
                 }
+            }
+        }
+
+        private bool CanExecute(object sender)
+        {
+            if (!string.IsNullOrEmpty(CommandOrMethodOrEvaluation)
+                && sender is FrameworkElement frameworkElement)
+            {
+                // Find control's ViewModel
+                var viewmodel = frameworkElement.DataContext;
+                if (viewmodel != null)
+                {
+                    Type viewModelType = viewmodel.GetType();
+
+                    object parameter = commandParameterListener?.Value ?? CommandParameter;
+
+                    if (viewModelType.GetProperty(CanExecuteForMethodOrEvaluation)?.GetValue(viewmodel) is bool canExecute)
+                    {
+                        if (viewmodel is INotifyPropertyChanged notifyPropertyChanged
+                            && (!PropertiesToBindDict.ContainsKey(notifyPropertyChanged)
+                                || !PropertiesToBindDict[notifyPropertyChanged].Contains(CanExecuteForMethodOrEvaluation)))
+                        {
+                            WeakEventManager<INotifyPropertyChanged, PropertyChangedEventArgs>.AddHandler(notifyPropertyChanged, nameof(INotifyPropertyChanged.PropertyChanged), NotifyPropertyChanged_PropertyChanged);
+                            if (!PropertiesToBindDict.ContainsKey(notifyPropertyChanged))
+                                PropertiesToBindDict[notifyPropertyChanged] = new List<string>();
+
+                            PropertiesToBindDict[notifyPropertyChanged].Add(CanExecuteForMethodOrEvaluation);
+                        }
+
+                        return canExecute;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private void NotifyPropertyChanged_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (sender is INotifyPropertyChanged notifyPropertyChanged
+                && PropertiesToBindDict.ContainsKey(notifyPropertyChanged)
+                && PropertiesToBindDict[notifyPropertyChanged].Contains(e.PropertyName))
+            {
+                RefreshCanExecute();
+            }
+        }
+
+        private void RefreshCanExecute()
+        {
+            if (relayCommandReference.TryGetTarget(out IRelayCommand relayCommand))
+            {
+                relayCommand.RaiseCanExecuteChanged();
             }
         }
 
@@ -154,7 +220,7 @@ namespace CodingSeb.Mvvm.UIHelpers
                     OptionScriptNeedSemicolonAtTheEndOfLastExpression = false
                 };
 
-                if(CommandParameterBinding != null)
+                if (CommandParameterBinding != null)
                 {
                     commandParameterListener = new DependencyPropertyListener(CommandParameterBinding, targetObject);
                 }
@@ -178,9 +244,20 @@ namespace CodingSeb.Mvvm.UIHelpers
                         return invokeCommand.CreateDelegate(eventHandlerType, this);
                     }
                 }
-                else if(service.TargetProperty is DependencyProperty dependencyProperty && dependencyProperty.PropertyType == typeof(ICommand))
+                else if (service.TargetProperty is DependencyProperty dependencyProperty && dependencyProperty.PropertyType == typeof(ICommand))
                 {
-                    return new RelayCommand(_ => InvokeCommand(targetObject, EventArgs.Empty));
+                    IRelayCommand relayCommand;
+
+                    if (CanExecuteForMethodOrEvaluation != null)
+                    {
+                        relayCommand = new RelayCommand(_ => InvokeCommand(targetObject, EventArgs.Empty), _ => CanExecute(targetObject));
+                        relayCommandReference = new WeakReference<IRelayCommand>(relayCommand);
+                        return relayCommand;
+                    }
+                    else
+                    {
+                        return new RelayCommand(_ => InvokeCommand(targetObject, EventArgs.Empty));
+                    }
                 }
             }
             throw new InvalidOperationException("The EventBinding markup extension is valid only in the context of events or commands.");

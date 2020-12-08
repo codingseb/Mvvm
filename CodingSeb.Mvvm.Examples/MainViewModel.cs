@@ -11,6 +11,8 @@ namespace CodingSeb.Mvvm.Examples
 
         public int Value2 { get; set; } = 4;
 
+        public bool TestCanExecute { get; set; } = true;
+
         public ICommand IncrementValue1Command => new RelayCommand(_ => Value1++);
 
         public void DecrementValue1()
