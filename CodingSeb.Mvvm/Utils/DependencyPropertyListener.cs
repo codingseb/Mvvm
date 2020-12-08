@@ -19,6 +19,8 @@ namespace CodingSeb.Mvvm
             DependencyObject source,
             PropertyPath property)
         {
+            DependencyProperty.
+
             BindingOperations.SetBinding(this, ProxyProperty, new Binding
             {
                 Source = source,
@@ -52,38 +54,29 @@ namespace CodingSeb.Mvvm
             if (binding.ElementName != null && dependencyObject is FrameworkElement frameworkElement)
             {
                 binding = new Binding()
-                {
-                    
-                    Path = binding.Path,
-                    Source = frameworkElement.FindName(binding.ElementName)
-                };
+                    { Source = frameworkElement.FindName(binding.ElementName) }
+                    .PartialCopyFrom(binding);
             }
             else if (binding.RelativeSource != null)
             {
                 if (binding.RelativeSource.Mode == RelativeSourceMode.Self)
                 {
                     binding = new Binding()
-                    {
-                        Path = binding.Path,
-                        Source = dependencyObject
-                    };
+                        { Source = dependencyObject }
+                        .PartialCopyFrom(binding);
                 }
                 else if (binding.RelativeSource.Mode == RelativeSourceMode.FindAncestor)
                 {
                     binding = new Binding()
-                    {
-                        Path = binding.Path,
-                        Source = dependencyObject.FindLogicalParent(binding.RelativeSource.AncestorType, Math.Max(binding.RelativeSource.AncestorLevel, 1))
-                    };
+                        { Source = dependencyObject.FindLogicalParent(binding.RelativeSource.AncestorType, Math.Max(binding.RelativeSource.AncestorLevel, 1))}
+                        .PartialCopyFrom(binding);
                 }
             }
             else if(binding.Source == null && dependencyObject is FrameworkElement frameworkElement2)
             {
                 binding = new Binding()
-                {
-                    Path = binding.Path,
-                    Source = frameworkElement2.DataContext
-                };
+                    { Source = frameworkElement2.DataContext }
+                    .PartialCopyFrom(binding);
             }
 
             return binding;
@@ -119,6 +112,36 @@ namespace CodingSeb.Mvvm
         private void OnChanged(DependencyPropertyChangedEventArgs e)
         {
             Changed?.Invoke(this, e);
+        }
+    }
+
+    internal static class BindingExtensions
+    {
+        internal static Binding PartialCopyFrom(this Binding newBinding, Binding binding)
+        {
+            newBinding.Delay = binding.Delay;
+
+            if(binding.XPath != null)
+                newBinding.XPath = binding.XPath;
+            if(binding.BindingGroupName != null)
+                newBinding.BindingGroupName = binding.BindingGroupName;
+            if(binding.FallbackValue != null)
+                newBinding.FallbackValue = binding.FallbackValue;
+            if(binding.StringFormat != null)
+                newBinding.StringFormat = binding.StringFormat;
+            if (binding.Converter != null)
+                newBinding.Converter = binding.Converter;
+            if (binding.ConverterCulture != null)
+                newBinding.ConverterCulture = binding.ConverterCulture;
+            if (binding.ConverterParameter != null)
+                newBinding.ConverterParameter = binding.ConverterParameter;
+            if (binding.Path != null)
+                newBinding.Path = binding.Path;
+
+            newBinding.Mode = BindingMode.OneWay;
+            newBinding.UpdateSourceTrigger = binding.UpdateSourceTrigger;
+
+            return newBinding;
         }
     }
 }
