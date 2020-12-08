@@ -11,7 +11,7 @@ namespace CodingSeb.Mvvm
     internal class InternalExpressionEvaluatorWithXamlContext : ExpressionEvaluator.ExpressionEvaluator
     {
         private static readonly Regex elementNameRegex =
-            new Regex(@"^((\#(?<ElementName>[\p{L}_][\p{L}_0-9]*))|([@](?<ResourceKey>[\p{L}_][\p{L}_0-9]*))|(?<Self>\$self)|(?<Parent>\$parent(?![\p{L}_0-9])(?<Parameters>\[)?))");
+            new Regex(@"^((\#(?<ElementName>[\p{L}_][\p{L}_0-9]*))|([@](?<ResourceKey>[\p{L}_][\p{L}_0-9]*))|(?<Self>\$self)|(?<Parent>\$(?<InVisualTree>\$)?parent(?![\p{L}_0-9])(?<Parameters>\[)?))");
 
         public DependencyObject TargetObject { get; set; }
 
@@ -49,7 +49,9 @@ namespace CodingSeb.Mvvm
             {
                 if (match.Groups["Parent"].Success)
                 {
-                    if(match.Groups["Parameters"].Success)
+                    bool useVisualTreeForParents = match.Groups["InVisualTree"].Success;
+
+                    if (match.Groups["Parameters"].Success)
                     {
                         i += match.Length;
 
@@ -68,11 +70,11 @@ namespace CodingSeb.Mvvm
                             level = int1;
                         }
 
-                        stack.Push(TargetObject.FindVisualParent(type, level));
+                        stack.Push(useVisualTreeForParents ? TargetObject.FindVisualParent(type, level) : TargetObject.FindLogicalParent(type, level));
                     }
                     else
                     {
-                        stack.Push(VisualTreeHelper.GetParent(TargetObject));
+                        stack.Push(useVisualTreeForParents ? VisualTreeHelper.GetParent(TargetObject) : LogicalTreeHelper.GetParent(TargetObject));
                         i += match.Length - 1;
                     }
                 }

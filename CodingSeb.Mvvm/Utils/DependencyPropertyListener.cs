@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Windows;
 using System.Windows.Data;
 
@@ -19,8 +18,6 @@ namespace CodingSeb.Mvvm
             DependencyObject source,
             PropertyPath property)
         {
-            DependencyProperty.
-
             BindingOperations.SetBinding(this, ProxyProperty, new Binding
             {
                 Source = source,
@@ -97,7 +94,7 @@ namespace CodingSeb.Mvvm
             BindingOperations.ClearBinding(this, ProxyProperty);
             Changed = null;
         }
-         
+
         private static void OnSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var listener = (DependencyPropertyListener)d;
