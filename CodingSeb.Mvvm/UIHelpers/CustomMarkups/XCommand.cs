@@ -307,6 +307,15 @@ namespace CodingSeb.Mvvm.UIHelpers
                 if (viewModel.GetType().GetProperty(CommandOrMethodOrEvaluation)?.GetValue(viewModel) is ICommand command)
                 {
                     WeakEventManager<ICommand, EventArgs>.AddHandler(command, nameof(ICommand.CanExecuteChanged), RelayCommand_CanExecuteChanged);
+                    if(viewModel is INotifyPropertyChanged commandNotifyPropertyChanged)
+                    {
+                        WeakEventManager<INotifyPropertyChanged, PropertyChangedEventArgs>.AddHandler(commandNotifyPropertyChanged, nameof(INotifyPropertyChanged.PropertyChanged), NotifyPropertyChanged_PropertyChanged);
+                        if (!PropertiesToBindDict.ContainsKey(commandNotifyPropertyChanged))
+                            PropertiesToBindDict[commandNotifyPropertyChanged] = new List<string>();
+
+                        PropertiesToBindDict[commandNotifyPropertyChanged].Add(CommandOrMethodOrEvaluation);
+                    }
+
                 }
 
                 if (CanExecuteForMethodOrEvaluation != null

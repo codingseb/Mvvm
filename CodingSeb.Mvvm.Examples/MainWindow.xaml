@@ -27,7 +27,7 @@
             <TextBox x:Name="TextBox1" Grid.ColumnSpan="3" />
             <Label Content="Value1" />
             <TextBox Text="{Binding Value1, UpdateSourceTrigger=PropertyChanged}" />
-            <Button Content="Increment (Click to command)" Click="{XCommand IncrementValue1Command, TestCanExecute}"
+            <Button Content="Increment (Click to command)" Click="{XCommand IncrementValue1Command}"
                     VerticalAlignment="Center"/>
             <Button Content="Decrement (Click to method)" Click="{XCommand DecrementValue1, TestCanExecute}"
                     VerticalAlignment="Center"/>
