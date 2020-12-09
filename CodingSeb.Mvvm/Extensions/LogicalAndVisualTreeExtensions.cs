@@ -130,6 +130,48 @@ namespace System.Windows
         }
 
         /// <summary>
+        /// Find in the VisualTree the nearest element with the specified name
+        /// </summary>
+        /// <param name="name">the name of the element to find</param>
+        /// <returns>the foun element or null</returns>
+        public static DependencyObject FindNearestByName(this DependencyObject current, string name)
+        {
+            return current.FindNearestByName(name, null);
+        }
+
+        private static DependencyObject FindNearestByName(this DependencyObject current, string name, DependencyObject objectToIgnore, bool goToParentAfter = true)
+        {
+            if (current == null || current == objectToIgnore)
+                return null;
+
+            if (current is FrameworkElement frameworkElement)
+            {
+                if (frameworkElement.Name.Equals(name))
+                    return frameworkElement;
+
+                object elementNameObject = frameworkElement.FindName(name);
+
+                if (elementNameObject is DependencyObject dependencyObject)
+                    return dependencyObject;
+            }
+
+            foreach(var child in LogicalTreeHelper.GetChildren(current).OfType<DependencyObject>())
+            {
+                if (child != objectToIgnore)
+                {
+                    var result = child.FindNearestByName(name, objectToIgnore, false);
+
+                    if (result != null)
+                    {
+                        return result;
+                    }
+                }
+            }
+
+            return goToParentAfter ? VisualTreeHelper.GetParent(current).FindNearestByName(name, current) : null;
+        }
+
+        /// <summary>
         /// Search in the Visual tree for a descendant (child) of the specified type.
         /// Begin from the current parent and scan children
         /// </summary>

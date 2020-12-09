@@ -126,7 +126,7 @@ namespace CodingSeb.Mvvm.UIHelpers
                             }
                         });
                     }
-                    else
+                    else if(CanExecute(sender))
                     {
                         try
                         {
@@ -145,6 +145,8 @@ namespace CodingSeb.Mvvm.UIHelpers
                     }
                 }
             }
+
+            RefreshCanExecute();
         }
 
         private bool CanExecute(object sender)
@@ -153,11 +155,11 @@ namespace CodingSeb.Mvvm.UIHelpers
                 && sender is FrameworkElement frameworkElement)
             {                // Find control's ViewModel
                 var viewModel = frameworkElement.DataContext;
+                object parameter = commandParameterListener?.Value ?? CommandParameter;
                 if (viewModel != null)
                 {
                     Type viewModelType = viewModel.GetType();
 
-                    object parameter = commandParameterListener?.Value ?? CommandParameter;
                     if (viewModelType.GetProperty(CommandOrMethodOrEvaluation)?.GetValue(viewModel) is ICommand command)
                     {
                         object objArg = UseEventToCommandArgs ?
@@ -177,9 +179,37 @@ namespace CodingSeb.Mvvm.UIHelpers
                         return canExecute;
                     }
                 }
+
+                if (CanExecuteForMethodOrEvaluation != null)
+                {
+                    try
+                    {
+                        if(!frameworkElement.IsLoaded)
+                            WeakEventManager<FrameworkElement, RoutedEventArgs>.AddHandler(frameworkElement, nameof(FrameworkElement.Loaded), FrameworkElement_Loaded);
+
+                        Evaluator.Variables["Sender"] = sender;
+                        Evaluator.Variables["CommandParameter"] = parameter;
+
+                        return (bool)Evaluator.ScriptEvaluate(CanExecuteForMethodOrEvaluation);
+                    }
+                    catch
+                    { }
+                    finally
+                    {
+                        Evaluator.Variables.Clear();
+                    }
+                }
             }
 
             return true;
+        }
+
+        private void FrameworkElement_Loaded(object sender, RoutedEventArgs e)
+        {
+            if(sender is FrameworkElement frameworkElement)
+                WeakEventManager<FrameworkElement, RoutedEventArgs>.RemoveHandler(frameworkElement, nameof(FrameworkElement.Loaded), FrameworkElement_Loaded);
+
+            RefreshCanExecute();
         }
 
         private void RelayCommand_CanExecuteChanged(object sender, EventArgs e)

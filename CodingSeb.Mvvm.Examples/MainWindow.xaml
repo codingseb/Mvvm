@@ -40,7 +40,7 @@
             <Label Content="XCommandExpression" />
             <TextBox x:Name="XCommandExpressionTextBox" 
                      Text="MessageBox.Show(&quot;Hello&quot;)"/>
-            <Button Content="Click to Expression" Click="{XCommand ScriptEvaluate(#XCommandExpressionTextBox.Text), CatchEvaluationExceptions=True}"
+            <Button Content="Click to Expression" Click="{XCommand ScriptEvaluate(#XCommandExpressionTextBox.Text), #CheckBox1.IsChecked, CatchEvaluationExceptions=True}"
                     VerticalAlignment="Center"/>
             <Button Content="Command to Expression" Command="{XCommand ScriptEvaluate(#XCommandExpressionTextBox.Text)}"
                     VerticalAlignment="Center"/>
