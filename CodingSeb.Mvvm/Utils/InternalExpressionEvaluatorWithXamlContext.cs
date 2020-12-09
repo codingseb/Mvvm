@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Xaml;
 
+
 namespace CodingSeb.Mvvm
 {
     internal class InternalExpressionEvaluatorWithXamlContext : ExpressionEvaluator.ExpressionEvaluator
@@ -39,6 +40,10 @@ namespace CodingSeb.Mvvm
             Namespaces.Add("System.Diagnostics");
             StaticTypesForExtensionsMethods.Add(typeof(LogicalAndVisualTreeExtensions));
             ParsingMethods.Insert(0, EvaluateBindingVariables);
+            operatorsDictionary.Add("and", ExpressionEvaluator.ExpressionOperator.ConditionalAnd);
+            operatorsDictionary.Add("or", ExpressionEvaluator.ExpressionOperator.ConditionalOr);
+            operatorsDictionary.Add("_and", ExpressionEvaluator.ExpressionOperator.ConditionalAnd);
+            operatorsDictionary.Add("_or", ExpressionEvaluator.ExpressionOperator.ConditionalOr);
         }
 
         protected virtual bool EvaluateBindingVariables(string expression, Stack<object> stack, ref int i)
