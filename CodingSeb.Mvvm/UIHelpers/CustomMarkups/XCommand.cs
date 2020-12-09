@@ -16,6 +16,7 @@ namespace CodingSeb.Mvvm.UIHelpers
     public class XCommand : MarkupExtension
     {
         private WeakDictionary<INotifyPropertyChanged, List<string>> PropertiesToBindDict { get; } = new WeakDictionary<INotifyPropertyChanged, List<string>>();
+        private List<DependencyPropertyListener> DependencyPropertyListeners { get; } = new List<DependencyPropertyListener>();
         private WeakReference<IRelayCommand> relayCommandReference;
         private WeakReference<FrameworkElement> targetObjectReference;
 
@@ -145,8 +146,6 @@ namespace CodingSeb.Mvvm.UIHelpers
                     }
                 }
             }
-
-            RefreshCanExecute();
         }
 
         private bool CanExecute(object sender)
@@ -184,11 +183,22 @@ namespace CodingSeb.Mvvm.UIHelpers
                 {
                     try
                     {
-                        if(!frameworkElement.IsLoaded)
+                        if (!frameworkElement.IsLoaded)
+                        {
                             WeakEventManager<FrameworkElement, RoutedEventArgs>.AddHandler(frameworkElement, nameof(FrameworkElement.Loaded), FrameworkElement_Loaded);
+                            return false;
+                        }
+
+                        PropertiesToBindDict.Keys.ToList()
+                            .ForEach(notifyPropertyChanged => WeakEventManager<INotifyPropertyChanged, PropertyChangedEventArgs>.RemoveHandler(notifyPropertyChanged, nameof(INotifyPropertyChanged.PropertyChanged), NotifyPropertyChanged_PropertyChanged));
+                        DependencyPropertyListeners.ForEach(listener => listener.Dispose());
+                        PropertiesToBindDict.Clear();
+                        DependencyPropertyListeners.Clear();
 
                         Evaluator.Variables["Sender"] = sender;
                         Evaluator.Variables["CommandParameter"] = parameter;
+
+                        Evaluator.PreEvaluateVariable += Evaluator_PreEvaluateVariable;
 
                         return (bool)Evaluator.ScriptEvaluate(CanExecuteForMethodOrEvaluation);
                     }
@@ -197,6 +207,7 @@ namespace CodingSeb.Mvvm.UIHelpers
                     finally
                     {
                         Evaluator.Variables.Clear();
+                        Evaluator.PreEvaluateVariable -= Evaluator_PreEvaluateVariable;
                     }
                 }
             }
@@ -204,11 +215,34 @@ namespace CodingSeb.Mvvm.UIHelpers
             return true;
         }
 
+        private void Evaluator_PreEvaluateVariable(object sender, ExpressionEvaluator.VariablePreEvaluationEventArg args)
+        {
+            if (args.This is INotifyPropertyChanged notifyPropertyChanged)
+            {
+                WeakEventManager<INotifyPropertyChanged, PropertyChangedEventArgs>.AddHandler(notifyPropertyChanged, nameof(INotifyPropertyChanged.PropertyChanged), NotifyPropertyChanged_PropertyChanged);
+                if (!PropertiesToBindDict.ContainsKey(notifyPropertyChanged))
+                    PropertiesToBindDict[notifyPropertyChanged] = new List<string>();
+
+                PropertiesToBindDict[notifyPropertyChanged].Add(args.Name);
+            }
+            else if (args.This is DependencyObject dependencyObject)
+            {
+                var dependencyPropertyListener = new DependencyPropertyListener(dependencyObject, new PropertyPath(args.Name));
+                dependencyPropertyListener.Changed += DependencyPropertyListener_Changed;
+                DependencyPropertyListeners.Add(dependencyPropertyListener);
+            }
+        }
+
         private void FrameworkElement_Loaded(object sender, RoutedEventArgs e)
         {
             if(sender is FrameworkElement frameworkElement)
                 WeakEventManager<FrameworkElement, RoutedEventArgs>.RemoveHandler(frameworkElement, nameof(FrameworkElement.Loaded), FrameworkElement_Loaded);
 
+            RefreshCanExecute();
+        }
+
+        private void DependencyPropertyListener_Changed(object sender, DependencyPropertyChangedEventArgs e)
+        {
             RefreshCanExecute();
         }
 
