@@ -27,13 +27,13 @@
             <TextBox x:Name="TextBox1" Grid.ColumnSpan="3" />
             <Label Content="Value1" />
             <TextBox Text="{Binding Value1, UpdateSourceTrigger=PropertyChanged}" />
-            <Button Content="Increment (Click to command)" Click="{XCommand IncrementValue1Command}"
+            <Button Content="Increment (Click to command)" Click="{XCommand IncrementValue1Command, TestCanExecute}"
                     VerticalAlignment="Center"/>
-            <Button Content="Decrement (Click to method)" Click="{XCommand DecrementValue1}"
+            <Button Content="Decrement (Click to method)" Click="{XCommand DecrementValue1, TestCanExecute}"
                     VerticalAlignment="Center"/>
             <Label Content="Value2" />
             <TextBox Text="{Binding Value2, UpdateSourceTrigger=PropertyChanged}" />
-            <Button Content="Increment (Command to command)" Command="{XCommand IncrementValue2Command}"
+            <Button Content="Increment (Command to command)" Command="{XCommand IncrementValue2Command, TestCanExecute}"
                         VerticalAlignment="Center"/>
             <Button Content="Decrement (Command to method)" Command="{XCommand DecrementValue2, TestCanExecute}"
                         VerticalAlignment="Center"/>

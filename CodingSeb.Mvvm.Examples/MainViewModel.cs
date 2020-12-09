@@ -10,17 +10,18 @@ namespace CodingSeb.Mvvm.Examples
         public int Value1 { get; set; } = 10;
 
         public int Value2 { get; set; } = 4;
-
         public bool TestCanExecute { get; set; } = true;
 
-        public ICommand IncrementValue1Command => new RelayCommand(_ => Value1++);
+        private ICommand incrementValue1Command = null;
+        public ICommand IncrementValue1Command => incrementValue1Command ?? (incrementValue1Command = new RelayCommand(_ => Value1++, _ => TestCanExecute));
 
         public void DecrementValue1()
         {
             Value1--;
         }
 
-        public ICommand IncrementValue2Command => new RelayCommand(_ => Value2++);
+        private ICommand incrementValue2Command = null;
+        public ICommand IncrementValue2Command => incrementValue2Command ?? (incrementValue2Command = new RelayCommand(_ => Value2++, _ => TestCanExecute));
 
         public void DecrementValue2()
         {

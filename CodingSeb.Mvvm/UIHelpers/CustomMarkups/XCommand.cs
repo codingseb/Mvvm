@@ -17,6 +17,7 @@ namespace CodingSeb.Mvvm.UIHelpers
     {
         private WeakDictionary<INotifyPropertyChanged, List<string>> PropertiesToBindDict { get; } = new WeakDictionary<INotifyPropertyChanged, List<string>>();
         private WeakReference<IRelayCommand> relayCommandReference;
+        private WeakReference<FrameworkElement> targetObjectReference;
 
         [ConstructorArgument("commandOrMethodOrEvaluation")]
         public string CommandOrMethodOrEvaluation { get; set; }
@@ -58,14 +59,14 @@ namespace CodingSeb.Mvvm.UIHelpers
                 && sender is FrameworkElement frameworkElement)
             {
                 // Find control's ViewModel
-                var viewmodel = frameworkElement.DataContext;
-                if (viewmodel != null)
+                var viewModel = frameworkElement.DataContext;
+                if (viewModel != null)
                 {
-                    Type viewModelType = viewmodel.GetType();
+                    Type viewModelType = viewModel.GetType();
 
                     object parameter = commandParameterListener?.Value ?? CommandParameter;
 
-                    if (viewModelType.GetProperty(CommandOrMethodOrEvaluation)?.GetValue(viewmodel) is ICommand command)
+                    if (viewModelType.GetProperty(CommandOrMethodOrEvaluation)?.GetValue(viewModel) is ICommand command)
                     {
                         object objArg = UseEventToCommandArgs ?
                         new XCommandArgs()
@@ -92,12 +93,12 @@ namespace CodingSeb.Mvvm.UIHelpers
                             ParameterInfo[] parametersInfos = methodInfo.GetParameters();
                             if (parametersInfos.Length == 0)
                             {
-                                methodInfo.Invoke(viewmodel, new object[0]);
+                                methodInfo.Invoke(viewModel, new object[0]);
                             }
                             else if (parametersInfos.Length == 1
                                 && (parametersInfos[0].ParameterType == typeof(XCommandArgs) || UseEventToCommandArgs))
                             {
-                                methodInfo.Invoke(viewmodel, new object[] {
+                                methodInfo.Invoke(viewModel, new object[] {
                                     new XCommandArgs()
                                     {
                                         Sender = sender,
@@ -108,20 +109,20 @@ namespace CodingSeb.Mvvm.UIHelpers
                             else if (parametersInfos.Length == 1
                                 && (parametersInfos[0].ParameterType == sender.GetType() || parametersInfos[0].ParameterType.IsAssignableFrom(sender.GetType())))
                             {
-                                methodInfo.Invoke(viewmodel, new object[] { parameter });
+                                methodInfo.Invoke(viewModel, new object[] { parameter });
                             }
                             else if (parametersInfos.Length == 2
                                 && (parametersInfos[0].ParameterType == sender.GetType() || parametersInfos[0].ParameterType.IsAssignableFrom(sender.GetType()))
                                 && (parametersInfos[1].ParameterType == args.GetType() || parametersInfos[1].ParameterType.IsAssignableFrom(args.GetType())))
                             {
-                                methodInfo.Invoke(viewmodel, new object[] { sender, args });
+                                methodInfo.Invoke(viewModel, new object[] { sender, args });
                             }
                             else if (parametersInfos.Length == 3
                                 && (parametersInfos[0].ParameterType == sender.GetType() || parametersInfos[0].ParameterType.IsAssignableFrom(sender.GetType()))
                                 && (parametersInfos[1].ParameterType == args.GetType() || parametersInfos[1].ParameterType.IsAssignableFrom(args.GetType()))
                                 && (parameter == null || parametersInfos[2].ParameterType == parameter.GetType() || parametersInfos[2].ParameterType.IsAssignableFrom(parameter.GetType())))
                             {
-                                methodInfo.Invoke(viewmodel, new object[] { sender, args, parameter });
+                                methodInfo.Invoke(viewModel, new object[] { sender, args, parameter });
                             }
                         });
                     }
@@ -150,34 +151,40 @@ namespace CodingSeb.Mvvm.UIHelpers
         {
             if (!string.IsNullOrEmpty(CommandOrMethodOrEvaluation)
                 && sender is FrameworkElement frameworkElement)
-            {
-                // Find control's ViewModel
-                var viewmodel = frameworkElement.DataContext;
-                if (viewmodel != null)
+            {                // Find control's ViewModel
+                var viewModel = frameworkElement.DataContext;
+                if (viewModel != null)
                 {
-                    Type viewModelType = viewmodel.GetType();
+                    Type viewModelType = viewModel.GetType();
 
                     object parameter = commandParameterListener?.Value ?? CommandParameter;
-
-                    if (viewModelType.GetProperty(CanExecuteForMethodOrEvaluation)?.GetValue(viewmodel) is bool canExecute)
+                    if (viewModelType.GetProperty(CommandOrMethodOrEvaluation)?.GetValue(viewModel) is ICommand command)
                     {
-                        if (viewmodel is INotifyPropertyChanged notifyPropertyChanged
-                            && (!PropertiesToBindDict.ContainsKey(notifyPropertyChanged)
-                                || !PropertiesToBindDict[notifyPropertyChanged].Contains(CanExecuteForMethodOrEvaluation)))
+                        object objArg = UseEventToCommandArgs ?
+                        new XCommandArgs()
                         {
-                            WeakEventManager<INotifyPropertyChanged, PropertyChangedEventArgs>.AddHandler(notifyPropertyChanged, nameof(INotifyPropertyChanged.PropertyChanged), NotifyPropertyChanged_PropertyChanged);
-                            if (!PropertiesToBindDict.ContainsKey(notifyPropertyChanged))
-                                PropertiesToBindDict[notifyPropertyChanged] = new List<string>();
+                            Sender = sender,
+                            EventArgs = null,
+                            CommandParameter = parameter
+                        } :
+                        parameter;
 
-                            PropertiesToBindDict[notifyPropertyChanged].Add(CanExecuteForMethodOrEvaluation);
-                        }
-
+                        // Execute Command and pass event arguments as parameter
+                        return command.CanExecute(objArg);
+                    }
+                    else if (CanExecuteForMethodOrEvaluation != null && viewModelType.GetProperty(CanExecuteForMethodOrEvaluation)?.GetValue(viewModel) is bool canExecute)
+                    {
                         return canExecute;
                     }
                 }
             }
 
             return true;
+        }
+
+        private void RelayCommand_CanExecuteChanged(object sender, EventArgs e)
+        {
+            RefreshCanExecute();
         }
 
         private void NotifyPropertyChanged_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -192,9 +199,16 @@ namespace CodingSeb.Mvvm.UIHelpers
 
         private void RefreshCanExecute()
         {
-            if (relayCommandReference.TryGetTarget(out IRelayCommand relayCommand))
+            IRelayCommand relayCommand = null;
+            FrameworkElement frameworkElement = null;
+
+            if (relayCommandReference?.TryGetTarget(out relayCommand) ?? false)
             {
                 relayCommand.RaiseCanExecuteChanged();
+            }
+            else if(targetObjectReference?.TryGetTarget(out frameworkElement) ?? false)
+            {
+                frameworkElement.IsEnabled = CanExecute(frameworkElement);
             }
         }
 
@@ -212,9 +226,10 @@ namespace CodingSeb.Mvvm.UIHelpers
             if (invokeCommand != null)
             {
                 FrameworkElement frameworkElement = targetObject as FrameworkElement;
-                object dataContext = frameworkElement?.DataContext;
+                targetObjectReference = new WeakReference<FrameworkElement>(frameworkElement);
+                object viewModel = frameworkElement?.DataContext;
 
-                Evaluator = new InternalExpressionEvaluatorWithXamlContext(dataContext, serviceProvider)
+                Evaluator = new InternalExpressionEvaluatorWithXamlContext(viewModel, serviceProvider)
                 {
                     TargetObject = targetObject,
                     OptionScriptNeedSemicolonAtTheEndOfLastExpression = false
@@ -225,8 +240,26 @@ namespace CodingSeb.Mvvm.UIHelpers
                     commandParameterListener = new DependencyPropertyListener(CommandParameterBinding, targetObject);
                 }
 
+                if (viewModel.GetType().GetProperty(CommandOrMethodOrEvaluation)?.GetValue(viewModel) is ICommand command)
+                {
+                    WeakEventManager<ICommand, EventArgs>.AddHandler(command, nameof(ICommand.CanExecuteChanged), RelayCommand_CanExecuteChanged);
+                }
+
+                if (CanExecuteForMethodOrEvaluation != null
+                    && viewModel is INotifyPropertyChanged notifyPropertyChanged
+                    && (!PropertiesToBindDict.ContainsKey(notifyPropertyChanged)
+                        || !PropertiesToBindDict[notifyPropertyChanged].Contains(CanExecuteForMethodOrEvaluation)))
+                {
+                    WeakEventManager<INotifyPropertyChanged, PropertyChangedEventArgs>.AddHandler(notifyPropertyChanged, nameof(INotifyPropertyChanged.PropertyChanged), NotifyPropertyChanged_PropertyChanged);
+                    if (!PropertiesToBindDict.ContainsKey(notifyPropertyChanged))
+                        PropertiesToBindDict[notifyPropertyChanged] = new List<string>();
+
+                    PropertiesToBindDict[notifyPropertyChanged].Add(CanExecuteForMethodOrEvaluation);
+                }
+
                 if (service.TargetProperty is EventInfo eventInfo)
                 {
+                    frameworkElement.IsEnabled = CanExecute(frameworkElement);
                     // If the context is an event, simply return the helper method as delegate
                     // (this delegate will be invoked when the event fires)
                     var eventHandlerType = eventInfo.EventHandlerType;
@@ -234,6 +267,7 @@ namespace CodingSeb.Mvvm.UIHelpers
                 }
                 else if (service.TargetProperty is MethodInfo methodInfo)
                 {
+                    frameworkElement.IsEnabled = CanExecute(frameworkElement);
                     // Some events are represented as method calls with 2 parameters:
                     // The first parameter is the control that acts as the event's sender,
                     // the second parameter is the actual event handler
