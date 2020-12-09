@@ -82,7 +82,7 @@ namespace CodingSeb.Mvvm
                 {
                     if (match.Groups["ElementName"].Success)
                     {
-                        object elementNameObject = TargetObject.FindNearestByName(match.Groups["ElementName"].Value);
+                        object elementNameObject = (TargetObject as FrameworkElement ?? TargetObject.FindLogicalParent<FrameworkElement>()).FindName(match.Groups["ElementName"].Value);
 
                         if (elementNameObject != null)
                             stack.Push(elementNameObject);
