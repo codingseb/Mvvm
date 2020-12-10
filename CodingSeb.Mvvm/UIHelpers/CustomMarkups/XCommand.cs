@@ -38,6 +38,8 @@ namespace CodingSeb.Mvvm.UIHelpers
 
         public bool CatchEvaluationExceptions { get; set; }
 
+        public bool CanExecuteFallbackValue { get; set; } = true;
+
         internal InternalExpressionEvaluatorWithXamlContext Evaluator { get; set; }
 
         public XCommand(string commandOrMethodOrEvaluation)
@@ -212,7 +214,7 @@ namespace CodingSeb.Mvvm.UIHelpers
                 }
             }
 
-            return true;
+            return CanExecuteFallbackValue;
         }
 
         private void Evaluator_PreEvaluateVariable(object sender, ExpressionEvaluator.VariablePreEvaluationEventArg args)
@@ -315,7 +317,6 @@ namespace CodingSeb.Mvvm.UIHelpers
 
                         PropertiesToBindDict[commandNotifyPropertyChanged].Add(CommandOrMethodOrEvaluation);
                     }
-
                 }
 
                 if (CanExecuteForMethodOrEvaluation != null
