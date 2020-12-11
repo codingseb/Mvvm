@@ -6,7 +6,6 @@ using System.Windows;
 using System.Windows.Media;
 using System.Xaml;
 
-
 namespace CodingSeb.Mvvm
 {
     internal class InternalExpressionEvaluatorWithXamlContext : ExpressionEvaluator.ExpressionEvaluator
