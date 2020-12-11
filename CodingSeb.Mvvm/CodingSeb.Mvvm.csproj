@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;net45</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;net45;net5.0-windows</TargetFrameworks>
     <LangVersion>8.0</LangVersion>
     <UseWPF>true</UseWPF>
     <Authors>CodingSeb</Authors>
@@ -11,16 +11,12 @@
     <Copyright>Copyright © Coding Seb 2019</Copyright>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <RepositoryUrl>https://github.com/codingseb/Mvvm</RepositoryUrl>
-    <Version>1.1.0</Version>
-    <AssemblyVersion>1.1.0.0</AssemblyVersion>
-    <PackageReleaseNotes>* XCommand (To bind between Events, Commands, Methods and Property for CanExecute) with smart refresh of the CanExecute (Have some code evaluation features similar to Eval).
-* Eval  with Code Evaluation (Avalonia UI Style and more) 
-.  .  * On DataContext (Properties and methods directly available)  
-.  .  * ElementName [#Name.Something]  
-.  .  * RelativeSource [$self, $parent (LogicalTree), $$parent (VisualTree), $parent[TypeName], $parent[3], $parent[TypeName,2] ]  
-. .   * StaticResource [@ResourceKey]  
-* XMultiBinding for nesting MultiBinding, Binding, Eval,  IMultiValueConverter, IValueConveter and other markups
-* IRelayCommand To Call RaiseCanExecuteChanged()</PackageReleaseNotes>
+    <Version>1.2.0</Version>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <PackageReleaseNotes>* Support for .Net5 (Windows only)
+* XCommand Support now Eval and XMultiBinding in CommandParameterBinding
+* XCommand has one more constructor to declare inline command, canExecute and CommandParameter or CommandParameterBinding</PackageReleaseNotes>
+    <FileVersion>1.2.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

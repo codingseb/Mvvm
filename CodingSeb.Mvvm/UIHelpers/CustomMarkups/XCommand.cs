@@ -38,17 +38,17 @@ namespace CodingSeb.Mvvm.UIHelpers
                 CanExecuteForMethodOrEvaluation = canExecuteForMethodOrEvaluation;
         }
 
-        public XCommand(string commandOrMethodOrEvaluation, string canExecuteForMethodOrEvaluation, object parameter)
+        public XCommand(string commandOrMethodOrEvaluation, string canExecuteForMethodOrEvaluation, object commandParameter)
         {
             CommandOrMethodOrEvaluation = commandOrMethodOrEvaluation;
 
             if(!string.IsNullOrEmpty(canExecuteForMethodOrEvaluation))
                 CanExecuteForMethodOrEvaluation = canExecuteForMethodOrEvaluation;
 
-            if (parameter is BindingBase bindingBase)
+            if (commandParameter is BindingBase bindingBase)
                 CommandParameterBinding = bindingBase;
             else
-                CommandParameter = parameter;
+                CommandParameter = commandParameter;
         }
 
         #endregion
@@ -67,7 +67,10 @@ namespace CodingSeb.Mvvm.UIHelpers
 
         private DependencyPropertyListener commandParameterListener;
 
+        [ConstructorArgument("commandParameter")]
         public object CommandParameter { get; set; }
+
+        [ConstructorArgument("commandParameter")]
         public MarkupExtension CommandParameterBinding { get; set; }
 
         public bool CatchEvaluationExceptions { get; set; }
