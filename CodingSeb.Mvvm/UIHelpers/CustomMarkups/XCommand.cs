@@ -20,27 +20,10 @@ namespace CodingSeb.Mvvm.UIHelpers
         private WeakReference<IRelayCommand> relayCommandReference;
         private WeakReference<FrameworkElement> targetObjectReference;
 
-        [ConstructorArgument("commandOrMethodOrEvaluation")]
-        public string CommandOrMethodOrEvaluation { get; set; }
+        #region Constructor and ManageArgs
 
-        [ConstructorArgument("canExecuteForMethodOrEvaluation")]
-        public string CanExecuteForMethodOrEvaluation { get; set; }
-
-        /// <summary>
-        /// if true pass andEventToCommandArgs object with commandparameter event sender and event args, if false just CommandParameter
-        /// </summary>
-        public bool UseEventToCommandArgs { get; set; }
-
-        private DependencyPropertyListener commandParameterListener;
-
-        public object CommandParameter { get; set; }
-        public BindingBase CommandParameterBinding { get; set; }
-
-        public bool CatchEvaluationExceptions { get; set; }
-
-        public bool CanExecuteFallbackValue { get; set; } = true;
-
-        internal InternalExpressionEvaluatorWithXamlContext Evaluator { get; set; }
+        public XCommand()
+        { }
 
         public XCommand(string commandOrMethodOrEvaluation)
         {
@@ -50,11 +33,48 @@ namespace CodingSeb.Mvvm.UIHelpers
         public XCommand(string commandOrMethodOrEvaluation, string canExecuteForMethodOrEvaluation)
         {
             CommandOrMethodOrEvaluation = commandOrMethodOrEvaluation;
-            CanExecuteForMethodOrEvaluation = canExecuteForMethodOrEvaluation;
+
+            if(!string.IsNullOrEmpty(canExecuteForMethodOrEvaluation))
+                CanExecuteForMethodOrEvaluation = canExecuteForMethodOrEvaluation;
         }
 
-        public XCommand()
-        { }
+        public XCommand(string commandOrMethodOrEvaluation, string canExecuteForMethodOrEvaluation, object parameter)
+        {
+            CommandOrMethodOrEvaluation = commandOrMethodOrEvaluation;
+
+            if(!string.IsNullOrEmpty(canExecuteForMethodOrEvaluation))
+                CanExecuteForMethodOrEvaluation = canExecuteForMethodOrEvaluation;
+
+            if (parameter is BindingBase bindingBase)
+                CommandParameterBinding = bindingBase;
+            else
+                CommandParameter = parameter;
+        }
+
+        #endregion
+
+
+        [ConstructorArgument("commandOrMethodOrEvaluation")]
+        public string CommandOrMethodOrEvaluation { get; set; }
+
+        [ConstructorArgument("canExecuteForMethodOrEvaluation")]
+        public string CanExecuteForMethodOrEvaluation { get; set; }
+
+        /// <summary>
+        /// if true pass a XCommandArgs object with commandparameter event sender and event args, if false just CommandParameter
+        /// </summary>
+        public bool UseXCommandArgs { get; set; }
+
+        private DependencyPropertyListener commandParameterListener;
+
+        public object CommandParameter { get; set; }
+        public MarkupExtension CommandParameterBinding { get; set; }
+
+        public bool CatchEvaluationExceptions { get; set; }
+
+        public bool CanExecuteFallbackValue { get; set; } = true;
+
+        internal InternalExpressionEvaluatorWithXamlContext Evaluator { get; set; }
 
         private void InvokeCommand(object sender, EventArgs args)
         {
@@ -71,7 +91,7 @@ namespace CodingSeb.Mvvm.UIHelpers
 
                     if (viewModelType.GetProperty(CommandOrMethodOrEvaluation)?.GetValue(viewModel) is ICommand command)
                     {
-                        object objArg = UseEventToCommandArgs ?
+                        object objArg = UseXCommandArgs ?
                         new XCommandArgs()
                         {
                             Sender = sender,
@@ -99,7 +119,7 @@ namespace CodingSeb.Mvvm.UIHelpers
                                 methodInfo.Invoke(viewModel, new object[0]);
                             }
                             else if (parametersInfos.Length == 1
-                                && (parametersInfos[0].ParameterType == typeof(XCommandArgs) || UseEventToCommandArgs))
+                                && (parametersInfos[0].ParameterType == typeof(XCommandArgs) || UseXCommandArgs))
                             {
                                 methodInfo.Invoke(viewModel, new object[] {
                                     new XCommandArgs()
@@ -163,7 +183,7 @@ namespace CodingSeb.Mvvm.UIHelpers
 
                     if (viewModelType.GetProperty(CommandOrMethodOrEvaluation)?.GetValue(viewModel) is ICommand command)
                     {
-                        object objArg = UseEventToCommandArgs ?
+                        object objArg = UseXCommandArgs ?
                         new XCommandArgs()
                         {
                             Sender = sender,
@@ -303,7 +323,33 @@ namespace CodingSeb.Mvvm.UIHelpers
 
                 if (CommandParameterBinding != null)
                 {
-                    commandParameterListener = new DependencyPropertyListener(CommandParameterBinding, targetObject);
+                    if(CommandParameterBinding is BindingBase commandParameterbindingBase)
+                    {
+                        commandParameterListener = new DependencyPropertyListener(commandParameterbindingBase, targetObject);
+                    }
+                    else
+                    {
+                        object providedValue = null;
+                        MethodInfo methodInfo = CommandParameterBinding.GetType().GetMethod("ProvideValue", new Type[] { typeof(IServiceProvider), typeof(bool) });
+
+                        if (methodInfo != null)
+                        {
+                            providedValue = methodInfo.Invoke(CommandParameterBinding, new object[] { serviceProvider, true });
+                        }
+                        else
+                        {
+                            providedValue = CommandParameterBinding.ProvideValue(serviceProvider);
+                        }
+
+                        if(providedValue is BindingBase provideValueBindingBase)
+                        {
+                            commandParameterListener = new DependencyPropertyListener(provideValueBindingBase, targetObject);
+                        }
+                        else
+                        {
+                            CommandParameter = providedValue;
+                        }
+                    }
                 }
 
                 if (viewModel.GetType().GetProperty(CommandOrMethodOrEvaluation)?.GetValue(viewModel) is ICommand command)

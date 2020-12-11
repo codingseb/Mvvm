@@ -52,7 +52,7 @@
         <DockPanel>
             <Button Content="XCommand on Method with args"
                     DockPanel.Dock="Right"
-                    Click="{XCommand ClickTest, CommandParameterBinding={Binding Text, ElementName=TextBox1}}" />
+                    Click="{XCommand ClickTest,'', {Eval #TextBox1.Text}}" />
             <TextBlock Text="{Eval '(Value1 + Value2).ToString()'}" />
         </DockPanel>
         <TextBlock Text="{Eval '((double)(#TextBox1.Text) + Value2).ToString()'}" />
