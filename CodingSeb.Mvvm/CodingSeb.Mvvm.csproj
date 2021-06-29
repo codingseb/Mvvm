@@ -11,10 +11,10 @@
     <Copyright>Copyright © Coding Seb 2019</Copyright>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <RepositoryUrl>https://github.com/codingseb/Mvvm</RepositoryUrl>
-    <Version>1.2.1</Version>
-    <AssemblyVersion>1.2.1.0</AssemblyVersion>
+    <Version>1.2.2</Version>
+    <AssemblyVersion>1.2.2.0</AssemblyVersion>
     <PackageReleaseNotes>Update EE</PackageReleaseNotes>
-    <FileVersion>1.2.1.0</FileVersion>
+    <FileVersion>1.2.2.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
