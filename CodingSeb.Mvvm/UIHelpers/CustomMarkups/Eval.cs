@@ -81,7 +81,10 @@ namespace CodingSeb.Mvvm.UIHelpers
             var evaluator = new InternalExpressionEvaluatorWithXamlContext(dataContext, serviceProvider)
             {
                 TargetObject = targetObject,
-                OptionScriptNeedSemicolonAtTheEndOfLastExpression = false
+                OptionsSyntaxRules = new ExpressionEvaluator.ExpressionEvaluator.SyntaxRules()
+                {
+                    MandatoryLastStatementTerminalPunctuator = false
+                }
             };
 
             var internalConverter = new EvalInternalConverter()

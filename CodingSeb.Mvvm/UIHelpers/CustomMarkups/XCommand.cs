@@ -322,7 +322,10 @@ namespace CodingSeb.Mvvm.UIHelpers
                 Evaluator = new InternalExpressionEvaluatorWithXamlContext(viewModel, serviceProvider)
                 {
                     TargetObject = targetObject,
-                    OptionScriptNeedSemicolonAtTheEndOfLastExpression = false
+                    OptionsSyntaxRules = new ExpressionEvaluator.ExpressionEvaluator.SyntaxRules()
+                    {
+                        MandatoryLastStatementTerminalPunctuator = false
+                    }
                 };
 
                 if (CommandParameterBinding != null)
