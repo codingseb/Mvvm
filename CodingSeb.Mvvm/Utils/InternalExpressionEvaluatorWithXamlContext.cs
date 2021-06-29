@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CodingSeb.ExpressionEvaluator;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -39,10 +40,10 @@ namespace CodingSeb.Mvvm
             Namespaces.Add("System.Diagnostics");
             StaticTypesForExtensionsMethods.Add(typeof(LogicalAndVisualTreeExtensions));
             ParsingMethods.Insert(0, EvaluateBindingVariables);
-            operatorsDictionary.Add("and", ExpressionEvaluator.ExpressionOperator.ConditionalAnd);
-            operatorsDictionary.Add("or", ExpressionEvaluator.ExpressionOperator.ConditionalOr);
-            operatorsDictionary.Add("_and", ExpressionEvaluator.ExpressionOperator.ConditionalAnd);
-            operatorsDictionary.Add("_or", ExpressionEvaluator.ExpressionOperator.ConditionalOr);
+            operatorsDictionary.Add("and", ExpressionOperator.ConditionalAnd);
+            operatorsDictionary.Add("or", ExpressionOperator.ConditionalOr);
+            operatorsDictionary.Add("_and", ExpressionOperator.ConditionalAnd);
+            operatorsDictionary.Add("_or", ExpressionOperator.ConditionalOr);
         }
 
         protected virtual bool EvaluateBindingVariables(string expression, Stack<object> stack, ref int i)
@@ -62,7 +63,7 @@ namespace CodingSeb.Mvvm
                         List<object> parameters = GetExpressionsBetweenParenthesesOrOtherImbricableBrackets(expression, ref i, true, ",", "[", "]")
                             .ConvertAll(Evaluate);
 
-                        Type type = (parameters[0] as ExpressionEvaluator.ClassOrEnumType)?.Type ?? parameters[0] as Type ?? typeof(DependencyObject);
+                        Type type = (parameters[0] as ClassOrEnumType)?.Type ?? parameters[0] as Type ?? typeof(DependencyObject);
                         int level = 1;
 
                         if(parameters[0] is int int0)

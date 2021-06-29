@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CodingSeb.ExpressionEvaluator;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -240,7 +241,7 @@ namespace CodingSeb.Mvvm.UIHelpers
             return CanExecuteFallbackValue;
         }
 
-        private void Evaluator_PreEvaluateVariable(object sender, ExpressionEvaluator.VariablePreEvaluationEventArg args)
+        private void Evaluator_PreEvaluateVariable(object sender, VariablePreEvaluationEventArg args)
         {
             if (args.This is INotifyPropertyChanged notifyPropertyChanged)
             {
