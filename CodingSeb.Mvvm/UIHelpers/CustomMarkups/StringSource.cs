@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Markup;
 
-namespace WPFMvvm.UIHelpers
+namespace CodingSeb.Mvvm.UIHelpers
 {
     /// <summary>
     /// An Markup to easily provide a inline string as binding source
