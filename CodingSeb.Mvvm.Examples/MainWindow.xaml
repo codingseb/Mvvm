@@ -111,5 +111,8 @@
                    Visibility="{Eval {Binding Text, ElementName=ExpressionTextBox}, FallbackValue=Visible}"/>
         <CheckBox IsEnabled="False"
                   IsChecked="{Eval {Binding Text, ElementName=ExpressionTextBox}}" />
+
+        <TextBlock Text="{StringSource 'Text from inline string source direct'}" />
+        <TextBlock Text="{Binding Source={StringSource 'Text from inline string source in binding'}}" />
     </StackPanelEx>
 </Window>
