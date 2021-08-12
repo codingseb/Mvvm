@@ -15,6 +15,7 @@ namespace CodingSeb.Mvvm.UIHelpers
     public class Eval : MarkupExtension
     {
         private BindingBase evaluateBinding;
+        private string evaluate;
         #region Constructor and ManageArgs
 
         public Eval()
@@ -33,7 +34,12 @@ namespace CodingSeb.Mvvm.UIHelpers
         /// <summary>
         /// The Expression to Evaluate
         /// </summary>
-        public string Evaluate { get; set; }
+        public string Evaluate
+        {
+            get { return evaluate; }
+            set
+            { evaluate = value.EscapeForXaml(); }
+        }
 
         public BindingBase EvaluateBinding
         {
