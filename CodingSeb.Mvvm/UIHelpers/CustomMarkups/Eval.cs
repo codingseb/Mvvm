@@ -123,7 +123,7 @@ namespace CodingSeb.Mvvm.UIHelpers
 
             try
             {
-                if (string.IsNullOrEmpty(Evaluate))
+                if (!string.IsNullOrEmpty(Evaluate))
                 {
                     internalConverter.LastValue = evaluator.ScriptEvaluate(Evaluate);
 

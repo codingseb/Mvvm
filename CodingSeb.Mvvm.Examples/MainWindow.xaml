@@ -109,6 +109,15 @@
                  IsChecked="{XMultiBinding {Binding IsChecked, ElementName=CheckBox1}, {Eval '2 > 1'}, Converter={BoolMultiBindingAndConditionConverter}}"/>
         <TextBlock Text="{XMultiBinding {Binding IsChecked, ElementName=CheckBox1}, {Eval '2 > 1'}, Converter={BoolMultiBindingAndConditionConverter}}"
                    Visibility="{Eval {Binding Text, ElementName=ExpressionTextBox}, FallbackValue=Visible}"/>
+        <TextBlock Visibility="{Eval {Binding Text, ElementName=ExpressionTextBox}, FallbackValue=Visible}">
+            <TextBlock.Text>
+                <XMultiBinding Converter="{BoolMultiBindingAndConditionConverter}">
+                    <XBindingProxy Binding="{Binding IsChecked, ElementName=CheckBox1}" />
+                    <XBindingProxy Binding="{Binding IsChecked, ElementName=CheckBox2}" />
+                    <Eval Evaluate="#CheckBox3.IsChecked" />
+                </XMultiBinding>
+            </TextBlock.Text>
+        </TextBlock>
         <CheckBox IsEnabled="False"
                   IsChecked="{Eval {Binding Text, ElementName=ExpressionTextBox}}" />
 
