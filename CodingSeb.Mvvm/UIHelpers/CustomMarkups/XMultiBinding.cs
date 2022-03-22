@@ -126,19 +126,39 @@ namespace CodingSeb.Mvvm.UIHelpers
 
         #endregion
 
+        /// <summary>
+        /// Direct children of the XMultiBinding
+        /// </summary>
         public Collection<MarkupExtension> Children { get; } = new Collection<MarkupExtension>();
 
+        /// <summary>
+        /// Gets or sets the converter to use to convert the source values to or from the target value.
+        /// </summary>
         public IMultiValueConverter Converter { get; set; }
 
+        /// <summary>
+        /// Gets or sets an optional parameter to pass to a converter as additional information.
+        /// </summary>
         public object ConverterParameter { get; set; }
 
+        /// <summary>
+        /// Gets or sets the CultureInfo object that applies to any converter assigned to Children wrapped by the XMultiBinding or on the XMultiBinding itself
+        /// </summary>
         public CultureInfo ConverterCultureInfo { get; set; }
 
+        /// <inheritdoc/>
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
             return ProvideValue(serviceProvider, false);
         }
 
+        /// <summary>
+        /// Special ProvideValue that can indicate that this MarkupExtension is used in a other XMultibinding for example and is not the root binding
+        /// </summary>
+        /// <param name="serviceProvider">A service provider helper that can provide services for the markup extension</param>
+        /// <param name="hierarchyBuilding">Should be given as <c>true</c> when this markup extension is used in an other XMultibinding. So it do not set the binding directly on the dependencyProperty</param>
+        /// <returns>A MultiBinding with all the hierarchy logic</returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public object ProvideValue(IServiceProvider serviceProvider, bool hierarchyBuilding)
         {
             if (Converter == null)

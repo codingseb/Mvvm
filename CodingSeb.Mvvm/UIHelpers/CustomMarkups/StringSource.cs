@@ -16,8 +16,12 @@ namespace CodingSeb.Mvvm.UIHelpers
             StringValue = stringValue;
         }
 
+        /// <summary>
+        /// The string to provide
+        /// </summary>
         public string StringValue { get; set; } = string.Empty;
 
+        /// <inheritdoc/>
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
             return StringValue;

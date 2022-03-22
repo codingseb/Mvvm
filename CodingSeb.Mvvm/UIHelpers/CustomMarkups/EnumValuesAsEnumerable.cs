@@ -26,6 +26,7 @@ namespace CodingSeb.Mvvm.UIHelpers
             }
         }
 
+        /// <inheritdoc/>
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
             return Enum.GetValues(EnumType);

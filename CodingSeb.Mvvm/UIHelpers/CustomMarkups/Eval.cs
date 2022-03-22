@@ -41,6 +41,9 @@ namespace CodingSeb.Mvvm.UIHelpers
             { evaluate = value.EscapeForXaml(); }
         }
 
+        /// <summary>
+        /// To give the expression to evaluate by binding
+        /// </summary>
         public BindingBase EvaluateBinding
         {
             get { return evaluateBinding; }
@@ -67,11 +70,19 @@ namespace CodingSeb.Mvvm.UIHelpers
         /// </summary>
         public EvalAutoBinding AutoBinding { get; set; }
 
+        /// <inheritdoc/>
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
             return ProvideValue(serviceProvider, false);
         }
 
+        /// <summary>
+        /// Special ProvideValue that can indicate that this MarkupExtension is used in a XMultibinding for example and is not the root binding
+        /// </summary>
+        /// <param name="serviceProvider">A service provider helper that can provide services for the markup extension</param>
+        /// <param name="hierarchyBuilding">Should be given as <c>true</c> when this markup extension is used in an other XMultibinding. So it do not set the binding directly on the dependencyProperty</param>
+        /// <returns>Depending on the configuration return a multibinding or the calclulated value</returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public object ProvideValue(IServiceProvider serviceProvider, bool hierarchyBuilding)
         {
             if (!(serviceProvider.GetService(typeof(IProvideValueTarget)) is IProvideValueTarget service)

@@ -1,5 +1,8 @@
 ﻿namespace System.Windows.Input
 {
+    /// <summary>
+    /// A type of ICommand to easily define method Execute and CanExecute in a ViewModel
+    /// </summary>
     public class RelayCommand : IRelayCommand
     {
         private EventHandler internalCanExecuteChanged;
@@ -51,11 +54,13 @@
             }
         }
 
+        /// <inheritdoc/>
         public bool CanExecute(object parameter)
         {
             return canExecute == null || canExecute(parameter);
         }
 
+        /// <inheritdoc/>
         public event EventHandler CanExecuteChanged
         {
             add
@@ -76,6 +81,7 @@
             }
         }
 
+        /// <inheritdoc/>
         public void Execute(object parameter)
         {
             execute(parameter);

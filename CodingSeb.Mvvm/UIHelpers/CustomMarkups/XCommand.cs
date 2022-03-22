@@ -54,7 +54,6 @@ namespace CodingSeb.Mvvm.UIHelpers
 
         #endregion
 
-
         [ConstructorArgument("commandOrMethodOrEvaluation")]
         public string CommandOrMethodOrEvaluation { get; set; }
 
@@ -289,10 +288,9 @@ namespace CodingSeb.Mvvm.UIHelpers
 
         private void RefreshCanExecute()
         {
-            IRelayCommand relayCommand = null;
             FrameworkElement frameworkElement = null;
 
-            if (relayCommandReference?.TryGetTarget(out relayCommand) ?? false)
+            if (relayCommandReference?.TryGetTarget(out IRelayCommand relayCommand) ?? false)
             {
                 relayCommand.RaiseCanExecuteChanged();
             }
@@ -302,6 +300,7 @@ namespace CodingSeb.Mvvm.UIHelpers
             }
         }
 
+        /// <inheritdoc/>
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
             if (!(serviceProvider.GetService(typeof(IProvideValueTarget)) is IProvideValueTarget service)
@@ -313,6 +312,7 @@ namespace CodingSeb.Mvvm.UIHelpers
 
             // Retrieve a reference to the InvokeCommand helper method declared below, using reflection
             MethodInfo invokeCommand = GetType().GetMethod(nameof(InvokeCommand), BindingFlags.Instance | BindingFlags.NonPublic);
+
             if (invokeCommand != null)
             {
                 FrameworkElement frameworkElement = targetObject as FrameworkElement;
