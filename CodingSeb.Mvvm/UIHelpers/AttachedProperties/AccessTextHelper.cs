@@ -5,7 +5,7 @@ using System.Windows.Input;
 namespace CodingSeb.Mvvm.UIHelpers
 {
     /// <summary>
-    /// an attached property helper to specify for which target component a AccessText is for
+    /// An attached property helper to specify for which target component a AccessText is for
     /// </summary>
     public static class AccessTextHelper
     {

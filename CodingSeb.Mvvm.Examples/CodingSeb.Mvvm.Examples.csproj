@@ -5,11 +5,15 @@
     <TargetFrameworks>netcoreapp3.1;net47</TargetFrameworks>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="FodyWeavers.xsd" />
+  </ItemGroup>
   
   <ItemGroup>
     <PackageReference Include="CodingSeb.Converters" Version="1.0.3" />
     <PackageReference Include="CodingSeb.Layouts" Version="1.0.1" />
-    <PackageReference Include="PropertyChanged.Fody" Version="3.3.1" />
+    <PackageReference Include="PropertyChanged.Fody" Version="3.3.1" PrivateAssets="All"/>
     <PackageReference Include="CodingSeb.ExpressionEvaluator" Version="*" />
   </ItemGroup>
   

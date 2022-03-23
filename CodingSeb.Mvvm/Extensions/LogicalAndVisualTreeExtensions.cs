@@ -6,6 +6,12 @@ namespace System.Windows
 {
     public static class LogicalAndVisualTreeExtensions
     {
+        /// <summary>
+        /// Get the root of tree by using the FrameworkElement Parent property.
+        /// Prefer to use FindVisualParent or FindLogicalParent
+        /// </summary>
+        /// <param name="element">the current element from which to find the root object</param>
+        /// <returns></returns>
         public static FrameworkElement GetTopFrameworkElement(this FrameworkElement element)
         {
             return !(element.Parent is FrameworkElement) ? element : (element.Parent as FrameworkElement)?.GetTopFrameworkElement();
@@ -171,6 +177,12 @@ namespace System.Windows
             return null;
         }
 
+        /// <summary>
+        /// Get the nearest ressource that is identify by the given resourceKey
+        /// </summary>
+        /// <param name="self">the current dependencyObject</param>
+        /// <param name="resourceKey">the key to identify the ressource</param>
+        /// <returns></returns>
         public static object FindNearestResource(this DependencyObject self, object resourceKey)
         {
             FrameworkElement frameworkElement = self as FrameworkElement ?? self.FindLogicalParent<FrameworkElement>();
